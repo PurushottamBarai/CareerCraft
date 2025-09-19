@@ -700,7 +700,7 @@ app.get('/api/test', async (req, res) => {
 });
 
 // Catch-all route for SPA
-app.get(/:path(*), (req, res) => {
+app.get(app.use(), (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
