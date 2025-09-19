@@ -127,9 +127,9 @@ async function setupTables() {
       )
     `);
 
-    console.log('✅ Database tables created/verified');
+    console.log('Database tables created/verified');
   } catch (error) {
-    console.error('❌ Database setup error:', error);
+    console.error('Database setup error:', error);
   }
 }
 
@@ -144,7 +144,7 @@ async function setupTables() {
     await setupTables();
     
   } catch (err) {
-    console.error('❌ Database connection failed:', err.message);
+    console.error('Database connection failed:', err.message);
   }
 })();
 
@@ -700,7 +700,7 @@ app.get('/api/test', async (req, res) => {
 });
 
 // Catch-all route for SPA
-app.get('*', (req, res) => {
+app.get('/*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
