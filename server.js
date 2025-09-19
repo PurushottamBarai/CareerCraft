@@ -11,12 +11,13 @@ const fs = require('fs').promises;
 
 const app = express();
 
+// Database configuration with Railway environment variables
 const dbConfig = {
-  host: process.env.DB_HOST || process.env.MYSQL_HOST || 'localhost',
-  user: process.env.DB_USER || process.env.MYSQL_USER || 'root',
-  password: process.env.DB_PASS || process.env.MYSQL_PASSWORD || '2006',
-  database: process.env.DB_NAME || process.env.MYSQL_DATABASE || 'careercraft',
-  port: process.env.DB_PORT || process.env.MYSQL_PORT || 3306,
+  host: process.env.MYSQL_HOST || process.env.DB_HOST || 'localhost',
+  user: process.env.MYSQL_USER || process.env.DB_USER || 'root',
+  password: process.env.MYSQL_PASSWORD || process.env.DB_PASS || '2006',
+  database: process.env.MYSQL_DATABASE || process.env.DB_NAME || 'careercraft',
+  port: process.env.MYSQL_PORT || process.env.DB_PORT || 3306,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
@@ -39,14 +40,115 @@ let db;
     db = await mysql.createPool(dbConfig);
     
     const [rows] = await db.execute('SELECT 1 as test');
-    console.log(' Database connected successfully:', rows);
+    console.log('✅ Database connected successfully:', rows);
     
   } catch (err) {
-    console.error(' Database connection failed:', err.message);
+    console.error('❌ Database connection failed:', err.message);
     console.error('Connection config used:', dbConfig);
   }
 })();
 
+// Add this function after your database connection in server.js
+async function setupTables() {
+  try {
+    // Create users table
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        firstName VARCHAR(100) NOT NULL,
+        lastName VARCHAR(100) NOT NULL,
+        username VARCHAR(100) UNIQUE NOT NULL,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        role ENUM('student', 'employer') NOT NULL,
+        companyName VARCHAR(255) NULL,
+        college VARCHAR(255) NULL,
+        course VARCHAR(255) NULL,
+        graduationYear INT NULL,
+        phone VARCHAR(20) NULL,
+        address TEXT NULL,
+        profileImage VARCHAR(500) NULL,
+        emailVerificationToken VARCHAR(255) NULL,
+        isEmailVerified BOOLEAN DEFAULT FALSE,
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Create jobs table
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS jobs (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        employerId INT NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        description TEXT NOT NULL,
+        skills JSON NOT NULL,
+        experienceYears INT DEFAULT 0,
+        experienceMonths INT DEFAULT 0,
+        location VARCHAR(255) NOT NULL,
+        salary VARCHAR(100) NULL,
+        isActive BOOLEAN DEFAULT TRUE,
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (employerId) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+
+    // Create applications table
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS applications (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        jobId INT NOT NULL,
+        studentId INT NOT NULL,
+        resumePath VARCHAR(500) NULL,
+        coverLetter TEXT NULL,
+        status ENUM('pending', 'accepted', 'rejected') DEFAULT 'pending',
+        employerNotes TEXT NULL,
+        appliedDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        statusUpdatedAt TIMESTAMP NULL,
+        FOREIGN KEY (jobId) REFERENCES jobs(id) ON DELETE CASCADE,
+        FOREIGN KEY (studentId) REFERENCES users(id) ON DELETE CASCADE,
+        UNIQUE KEY unique_application (jobId, studentId)
+      )
+    `);
+
+    // Create email_notifications table
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS email_notifications (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        userId INT NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        subject VARCHAR(500) NOT NULL,
+        message TEXT NOT NULL,
+        type VARCHAR(100) NOT NULL,
+        status ENUM('sent', 'failed', 'pending') DEFAULT 'pending',
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+
+    console.log('✅ Database tables created/verified');
+  } catch (error) {
+    console.error('❌ Database setup error:', error);
+  }
+}
+
+// Call this function after your database connection
+(async () => {
+  try {
+    db = await mysql.createPool(dbConfig);
+    const [rows] = await db.execute('SELECT 1 as test');
+    console.log(' Database connected successfully:', rows);
+    
+    // Setup tables automatically
+    await setupTables();
+    
+  } catch (err) {
+    console.error('❌ Database connection failed:', err.message);
+  }
+})();
+
+// CORS configuration for Railway
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? [
@@ -57,6 +159,7 @@ app.use(cors({
     : ['http://localhost:3000', 'http://localhost:5000'],
   credentials: true
 }));
+
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 app.use(express.static(__dirname));
@@ -93,6 +196,7 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 }
 });
 
+// Email configuration
 let transporter = null;
 console.log('Checking email configuration...');
 console.log('EMAIL_USER:', process.env.EMAIL_USER ? 'Set' : 'Not set');
@@ -100,7 +204,7 @@ console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? 'Set' : 'Not set');
 
 if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
   try {
-    transporter = nodemailer.createTransport({
+    transporter = nodemailer.createTransporter({
       service: 'gmail',
       auth: {
         user: process.env.EMAIL_USER,
@@ -196,6 +300,7 @@ const sendEmail = async (to, subject, html, userId, type) => {
   }
 };
 
+// Auth routes
 app.post('/api/auth/register', async (req, res) => {
   try {
     const { firstName, lastName, username, email, password, role, companyName, college, course, graduationYear, phone, address } = req.body;
@@ -580,6 +685,7 @@ app.get('/api/stats/student', auth, requireRole(['student']), async (req, res) =
   }
 });
 
+// Health check routes
 app.get('/api/test-db', async (req, res) => {
   try {
     const [result] = await db.query('SELECT 1 as test');
@@ -593,37 +699,8 @@ app.get('/api/test', async (req, res) => {
   res.json({ message: 'API is working', timestamp: new Date().toISOString() });
 });
 
-app.get('/api/debug/jobs', async (req, res) => {
-  try {
-    const [allJobs] = await db.query('SELECT * FROM jobs ORDER BY createdAt DESC');
-    const [allUsers] = await db.query('SELECT id, firstName, lastName, email, role, companyName FROM users');
-    
-    res.json({
-      totalJobs: allJobs.length,
-      jobs: allJobs,
-      users: allUsers
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.get('/api/debug/jobs-with-users', async (req, res) => {
-  try {
-    const [jobs] = await db.query(`
-      SELECT j.*, u.companyName, u.firstName as employerFirstName, u.lastName as employerLastName
-      FROM jobs j 
-      JOIN users u ON j.employerId = u.id 
-      ORDER BY j.createdAt DESC
-    `);
-    
-    res.json(jobs);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.get(/^(?!\/api).*/, (req, res) => {
+// Catch-all route for SPA
+app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 

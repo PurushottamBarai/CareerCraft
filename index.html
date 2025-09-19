@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CareerCraft</title>
+    <link rel="stylesheet" href="styles.css" />
+<link rel="icon" href="data:;base64,iVBORw0KGgo=">
+  </head>
+  <body>
+    <nav class="navbar">
+      <div class="nav-container">
+        <img class="logo" src="logo.png" alt="carreercraft" />
+        <div id="guestNavLinks" class="nav-links">
+          <div class="anc">
+            <a href="job.html">Jobs</a>
+            <a href="#companies">Companies</a>
+            <a href="#services">Services</a>
+          </div>
+          <div class="btn">
+            <button class="nav-btn login" onclick="showLogin()">Login</button>
+            <button class="nav-btn register" onclick="showStudentRegister()">
+              Register
+            </button>
+            <button class="nav-btn employer" id="logg" onclick="showEmployerRegister()">
+              Employer
+            </button>
+            <button class="nav-btn employer" id="logg"> Admin</button>
+          </div>
+        </div>
+
+        <div id="userNavLinks" class="nav-links hidden">
+          <span id="welcomeMessage" class="welcome-text"></span>
+          <div class="profile-menu">
+            <button class="profile-btn" onclick="toggleProfileDropdown()">
+              <img
+                id="profileImage"
+                src="/api/placeholder-profile.png"
+                class="profile-image"
+              />
+              <span id="profileName"></span>
+              <span class="dropdown-arrow">▼</span>
+            </button>
+            <div id="profileDropdown" class="profile-dropdown">
+              <a href="#" onclick="showProfile()">View Profile</a>
+              <a href="#" onclick="showEditProfile()">Edit Profile</a>
+              <a href="#" onclick="showDashboardStats()">Dashboard Stats</a>
+              <hr />
+              <a href="#" onclick="logout()">Logout</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container">
+      <div id="loginForm" class="form-section">
+        <div class="form-container">
+          <h2>Login</h2>
+          <form id="loginFormData">
+            <input type="email" name="email" placeholder="Email" required />
+            <input
+              type="password"
+              name="password"
+              placeholder="Password"
+              required
+            />
+            <button type="submit" class="submit-btn">Login</button>
+          </form>
+          <p>
+            Don't have an account?
+            <a href="#" onclick="showEmployerRegister()">Register</a>
+          </p>
+        </div>
+      </div>
+
+
+      <div id="employerRegister" class="form-section hidden">
+        <div class="form-container">
+          <h2>Register as Employer</h2>
+          <form id="employerRegisterForm">
+            <input
+              type="text"
+              name="firstName"
+              placeholder="First Name"
+              required
+            />
+            <input
+              type="text"
+              name="lastName"
+              placeholder="Last Name"
+              required
+            />
+            <input
+              type="text"
+              name="username"
+              placeholder="Username"
+              required
+            />
+            <input type="email" name="email" placeholder="Email" required />
+            <input
+              type="text"
+              name="companyName"
+              placeholder="Company Name"
+              required
+            />
+            <input type="tel" name="phone" placeholder="Phone Number" />
+            <textarea
+              name="address"
+              placeholder="Company Address"
+              rows="3"
+            ></textarea>
+            <input
+              type="password"
+              name="password"
+              placeholder="Password"
+              required
+            />
+            <input
+              type="password"
+              name="confirmPassword"
+              placeholder="Confirm Password"
+              required
+            />
+            <button type="submit" class="submit-btn">Register</button>
+          </form>
+          <p>
+            Already have an account?
+            <a href="#" onclick="showLogin()">Login instead</a>
+          </p>
+        </div>
+      </div>
+
+      <!-- Student Registration Form -->
+      <div id="studentRegister" class="form-section hidden">
+        <div class="form-container">
+          <h2>Register as Student</h2>
+          <form id="studentRegisterForm">
+            <input
+              type="text"
+              name="firstName"
+              placeholder="First Name"
+              required
+            />
+            <input
+              type="text"
+              name="lastName"
+              placeholder="Last Name"
+              required
+            />
+            <input
+              type="text"
+              name="username"
+              placeholder="Username"
+              required
+            />
+            <input type="email" name="email" placeholder="Email" required />
+            <input
+              type="text"
+              name="college"
+              placeholder="College Name"
+              required
+            />
+            <input type="text" name="course" placeholder="Course" required />
+            <input
+              type="number"
+              name="graduationYear"
+              placeholder="Graduation Year"
+              required
+            />
+            <input type="tel" name="phone" placeholder="Phone Number" />
+            <textarea name="address" placeholder="Address" rows="3"></textarea>
+            <input
+              type="password"
+              name="password"
+              placeholder="Password"
+              required
+            />
+            <input
+              type="password"
+              name="confirmPassword"
+              placeholder="Confirm Password"
+              required
+            />
+            <button type="submit" class="submit-btn">Register</button>
+          </form>
+          <p>
+            Already have an account?
+            <a href="#" onclick="showLogin()">Login instead</a>
+          </p>
+        </div>
+      </div>
+
+      <div id="employerDashboard" class="dashboard-section hidden">
+        <div class="dashboard-header">
+          <h2>Employer Dashboard</h2>
+          <div id="employerStats" class="stats-cards">
+          </div>
+          <div class="dashboard-nav">
+            <button class="dash-btn active" onclick="showPostJob(event)">
+              Post a New Job
+            </button>
+            <button class="dash-btn" onclick="showMyJobs(event)">
+              My Jobs
+            </button>
+          </div>
+        </div>
+
+        <div id="postJobSection" class="content-section">
+          <h3>Post a New Job</h3>
+          <form id="postJobForm" class="form">
+            <div class="form-group">
+              <label for="jobTitle">Job Title *</label>
+              <input type="text" id="jobTitle" name="jobTitle" required />
+            </div>
+
+            <div class="form-group">
+              <label for="jobDescription">Job Description *</label>
+              <textarea
+                id="jobDescription"
+                name="jobDescription"
+                rows="4"
+                required
+              ></textarea>
+            </div>
+
+            <div class="form-group">
+              <label>Required Skills *</label>
+              <div class="skills-grid">
+                <label
+                  ><input type="checkbox" name="skills" value="JavaScript" />
+                  JavaScript</label
+                >
+                <label
+                  ><input type="checkbox" name="skills" value="Python" />
+                  Python</label
+                >
+                <label
+                  ><input type="checkbox" name="skills" value="Java" />
+                  Java</label
+                >
+                <label
+                  ><input type="checkbox" name="skills" value="React" />
+                  React</label
+                >
+                <label
+                  ><input type="checkbox" name="skills" value="Node.js" />
+                  Node.js</label
+                >
+                <label
+                  ><input type="checkbox" name="skills" value="SQL" />
+                  SQL</label
+                >
+                <label
+                  ><input type="checkbox" name="skills" value="HTML/CSS" />
+                  HTML/CSS</label
+                >
+                <label
+                  ><input type="checkbox" name="skills" value="PHP" />
+                  PHP</label
+                >
+                <label
+                  ><input type="checkbox" name="skills" value="C++" />
+                  C++</label
+                >
+                <label
+                  ><input type="checkbox" name="skills" value="Angular" />
+                  Angular</label
+                >
+                <label
+                  ><input type="checkbox" name="skills" value="Vue.js" />
+                  Vue.js</label
+                >
+                <label
+                  ><input type="checkbox" name="skills" value="MongoDB" />
+                  MongoDB</label
+                >
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="experienceYears">Experience (Years)</label>
+                <select id="experienceYears" name="experienceYears">
+                  <option value="0">0 Years</option>
+                  <option value="1">1 Year</option>
+                  <option value="2">2 Years</option>
+                  <option value="3">3 Years</option>
+                  <option value="4">4 Years</option>
+                  <option value="5">5+ Years</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="experienceMonths">Additional Months</label>
+                <select id="experienceMonths" name="experienceMonths">
+                  <option value="0">0 Months</option>
+                  <option value="1">1 Month</option>
+                  <option value="2">2 Months</option>
+                  <option value="3">3 Months</option>
+                  <option value="4">4 Months</option>
+                  <option value="5">5 Months</option>
+                  <option value="6">6 Months</option>
+                  <option value="7">7 Months</option>
+                  <option value="8">8 Months</option>
+                  <option value="9">9 Months</option>
+                  <option value="10">10 Months</option>
+                  <option value="11">11 Months</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="location">Location *</label>
+              <input
+                type="text"
+                id="location"
+                name="location"
+                placeholder="e.g., Mumbai, Remote, Hybrid"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="salary">Salary Range</label>
+              <input
+                type="text"
+                id="salary"
+                name="salary"
+                placeholder="e.g., 5-8 LPA, Negotiable"
+              />
+            </div>
+
+            <button type="submit" class="btn btn-primary">Post Job</button>
+          </form>
+
+          <div id="jobPostedMsg" class="success-message hidden">
+            Job posted successfully!
+          </div>
+        </div>
+
+        <div id="myJobsSection" class="content-section hidden">
+          <h3>My Jobs</h3>
+          <p id="jobPostedMsg" class="success-msg hidden">
+            Job posted successfully!
+          </p>
+          <div class="jobs-table">
+            <div class="table-header">
+              <div>Title</div>
+              <div>Skills</div>
+              <div>Experience</div>
+              <div>Applications</div>
+              <div>Actions</div>
+            </div>
+            <div id="employerJobsList" class="table-body">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="studentDashboard" class="dashboard-section hidden">
+        <div class="dashboard-header">
+          <h2>Student Dashboard</h2>
+          <div id="studentStats" class="stats-cards">
+           
+          </div>
+          <div class="dashboard-nav">
+            <button class="dash-btn active" onclick="showBrowseJobs(event)">
+  Browse Jobs
+</button>
+<button class="dash-btn" onclick="showMyApplications(event)">
+  My Applications
+</button>
+              My Applications
+            </button>
+          </div>
+        </div>
+
+        <div id="browseJobsSection" class="content-section">
+          <h3>Browse Jobs</h3>
+          <div class="search-filter">
+            <input
+              type="text"
+              id="jobSearch"
+              placeholder="Search jobs by title or skills..."
+              onkeyup="filterJobs()"
+            />
+          </div>
+          <div class="jobs-table">
+            <div class="table-header">
+              <div>Title</div>
+              <div>Company</div>
+              <div>Skills</div>
+              <div>Experience</div>
+              <div>Action</div>
+            </div>
+            <div id="jobsList" class="table-body">
+            </div>
+          </div>
+        </div>
+
+        <div id="myApplicationsSection" class="content-section hidden">
+          <h3>My Applications</h3>
+          <div class="jobs-table">
+            <div class="table-header">
+              <div>Job Title</div>
+              <div>Company</div>
+              <div>Applied Date</div>
+              <div>Status</div>
+            </div>
+            <div id="applicationsList" class="table-body">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="profileSection" class="form-section hidden">
+        <div class="form-container profile-container">
+          <h2>My Profile</h2>
+          <div id="profileDetails">
+          </div>
+          <button class="submit-btn" onclick="showEditProfile()">
+            Edit Profile
+          </button>
+          <button class="cancel-btn" onclick="hideProfileSection()">
+            Back to Dashboard
+          </button>
+        </div>
+      </div>
+
+      <div id="editProfileSection" class="form-section hidden">
+        <div class="form-container">
+          <h2>Edit Profile</h2>
+          <form id="editProfileForm" enctype="multipart/form-data">
+            <label>Profile Image</label>
+            <input type="file" name="profileImage" accept="image/*" />
+
+            <label>First Name</label>
+            <input type="text" name="firstName" required />
+
+            <label>Last Name</label>
+            <input type="text" name="lastName" required />
+
+            <label>Phone</label>
+            <input type="tel" name="phone" />
+
+            <label>Address</label>
+            <textarea name="address" rows="3"></textarea>
+
+            <div id="employerFields" class="hidden">
+              <label>Company Name</label>
+              <input type="text" name="companyName" />
+            </div>
+
+            <div id="studentFields" class="hidden">
+              <label>College</label>
+              <input type="text" name="college" />
+
+              <label>Course</label>
+              <input type="text" name="course" />
+
+              <label>Graduation Year</label>
+              <input type="number" name="graduationYear" />
+            </div>
+
+            <button type="submit" class="submit-btn">Update Profile</button>
+            <button
+              type="button"
+              class="cancel-btn"
+              onclick="hideEditProfileSection()"
+            >
+              Cancel
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div id="statsSection" class="form-section hidden">
+        <div class="form-container stats-container">
+          <h2>Dashboard Statistics</h2>
+          <div id="detailedStats">
+          </div>
+          <button class="cancel-btn" onclick="hideStatsSection()">
+            Back to Dashboard
+          </button>
+        </div>
+      </div>
+
+      <div id="applyModal" class="modal hidden">
+        <div class="modal-content">
+          <span class="close-modal" onclick="closeApplyModal()">&times;</span>
+          <h3>Apply for Job</h3>
+          <div id="jobDetails" class="job-details-preview">
+          </div>
+          <form id="applyJobForm" enctype="multipart/form-data">
+            <input type="hidden" id="applyJobId" name="jobId" />
+            <label>Resume*</label>
+            <input
+              type="file"
+              name="resume"
+              accept=".pdf,.doc,.docx"
+              required
+            />
+            <label>Cover Letter</label>
+            <textarea
+              name="coverLetter"
+              rows="4" 
+              cols="72"
+              placeholder="Write your cover letter here..."
+              style="margin-top:1rem"
+            ></textarea>
+            <button type="submit" class="submit-btn">Apply</button>
+          </form>
+        </div>
+      </div>
+
+      <div id="viewApplicationsModal" class="modal hidden">
+        <div class="modal-content wide-modal">
+          <span class="close-modal" onclick="closeApplicationsModal()"
+            >&times;</span
+          >
+          <h3>Job Applications</h3>
+          <div id="jobApplicationsList">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
