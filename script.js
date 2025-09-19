@@ -2,9 +2,24 @@ let currentUser = null;
 let jobs = [];
 let applications = [];
 
-const API_BASE = window.location.hostname === 'localhost' 
-  ? 'http://localhost:5000/api' 
-  : '/api';
+// Enhanced API URL detection for Railway deployment
+const API_BASE = (() => {
+  const hostname = window.location.hostname;
+  const port = window.location.port;
+  const protocol = window.location.protocol;
+  
+  console.log('Current location:', { hostname, port, protocol });
+  
+  // Local development
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return `${protocol}//${hostname}:${port || 5000}/api`;
+  }
+  
+  // Railway production (or any other production environment)
+  return '/api';
+})();
+
+console.log('API Base URL:', API_BASE);
 
 document.addEventListener('DOMContentLoaded', function() {
     checkAuthStatus();
@@ -212,7 +227,7 @@ function setActiveTab(event) {
     }
 }
 
-// Fixed profile functions
+// Profile functions
 function toggleProfileDropdown(event) {
     if (event) {
         event.stopPropagation();
@@ -393,7 +408,7 @@ async function handleStudentRegister(e) {
     }
 }
 
-// Job managementjobs
+// Job management
 async function handlePostJob(e) {
     e.preventDefault();
     
@@ -469,7 +484,6 @@ async function handlePostJob(e) {
 }
 
 // Load jobs functions
-
 async function loadEmployerJobs() {
     console.log('=== Loading Employer Jobs ===');
     const token = localStorage.getItem('token');
@@ -534,7 +548,7 @@ async function loadEmployerJobs() {
         }
     }
 }
-// Update loadAvailableJobs function
+
 async function loadAvailableJobs() {
     console.log('=== Loading Available Jobs for Students ===');
     try {
@@ -948,4 +962,3 @@ window.onclick = function(event) {
         closeApplicationsModal();
     }
 }
-     
