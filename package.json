@@ -1,0 +1,29 @@
+{
+  "name": "careercraft",
+  "version": "1.0.0",
+  "description": "A full-stack job portal application for students and employers",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "setup-db": "node setup-database.js",
+    "build": "echo 'No build step needed for this app'"
+  },
+  "keywords": ["job-portal", "nodejs", "mysql", "express", "railway"],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.2",
+    "mysql2": "^3.14.5",
+    "nodemailer": "^7.0.6"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  }
+}
