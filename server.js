@@ -35,20 +35,7 @@ console.log('Database config:', {
 });
 
 let db;
-(async () => {
-  try {
-    db = await mysql.createPool(dbConfig);
-    
-    const [rows] = await db.execute('SELECT 1 as test');
-    console.log('✅ Database connected successfully:', rows);
-    
-  } catch (err) {
-    console.error('❌ Database connection failed:', err.message);
-    console.error('Connection config used:', dbConfig);
-  }
-})();
 
-// Add this function after your database connection in server.js
 async function setupTables() {
   try {
     // Create users table
@@ -204,7 +191,7 @@ console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? 'Set' : 'Not set');
 
 if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
   try {
-    transporter = nodemailer.createTransporter({
+    transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: process.env.EMAIL_USER,
@@ -700,7 +687,10 @@ app.get('/api/test', async (req, res) => {
 });
 
 // Catch-all route for SPA
-app.get('/:path(*)', (req, res) => {
+// app.get('/:path(*)', (req, res) => {
+//   res.sendFile(path.join(__dirname, 'index.html'));
+// });
+app.get(/^(?!\/api).*/, (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
