@@ -25,6 +25,10 @@ const dbConfig = {
     rejectUnauthorized: false
   } : false
 };
+console.log('DB Environment Check:');
+console.log('MYSQLHOST:', process.env.MYSQLHOST);
+console.log('MYSQLUSER:', process.env.MYSQLUSER);
+console.log('Final host:', dbConfig.host);
 
 console.log('Database config:', {
   host: dbConfig.host,
