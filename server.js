@@ -25,6 +25,10 @@ const dbConfig = {
     rejectUnauthorized: false
   } : false
 };
+console.log('DB Environment Check:');
+console.log('MYSQLHOST:', process.env.MYSQLHOST);
+console.log('MYSQLUSER:', process.env.MYSQLUSER);
+console.log('Final host:', dbConfig.host);
 
 console.log('Database config:', {
   host: dbConfig.host,
@@ -192,7 +196,7 @@ console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? 'Set' : 'Not set');
 
 if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
   try {
-    transporter = nodemailer.createTransporter({
+    transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: process.env.EMAIL_USER,
