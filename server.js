@@ -35,18 +35,7 @@ console.log('Database config:', {
 });
 
 let db;
-(async () => {
-  try {
-    db = await mysql.createPool(dbConfig);
-    
-    const [rows] = await db.execute('SELECT 1 as test');
-    console.log('✅ Database connected successfully:', rows);
-    
-  } catch (err) {
-    console.error('❌ Database connection failed:', err.message);
-    console.error('Connection config used:', dbConfig);
-  }
-})();
+
 
 // Add this function after your database connection in server.js
 async function setupTables() {
@@ -127,24 +116,23 @@ async function setupTables() {
       )
     `);
 
-    console.log('✅ Database tables created/verified');
+    console.log('Database tables created/verified');
   } catch (error) {
-    console.error('❌ Database setup error:', error);
+    console.error('Database setup error:', error);
   }
 }
 
-// Call this function after your database connection
+
 (async () => {
   try {
     db = await mysql.createPool(dbConfig);
     const [rows] = await db.execute('SELECT 1 as test');
-    console.log(' Database connected successfully:', rows);
+    console.log('Database connected successfully:', rows);
     
-    // Setup tables automatically
     await setupTables();
     
   } catch (err) {
-    console.error('❌ Database connection failed:', err.message);
+    console.error('Database connection failed:', err.message);
   }
 })();
 
@@ -700,7 +688,7 @@ app.get('/api/test', async (req, res) => {
 });
 
 // Catch-all route for SPA
-app.get('/*', (req, res) => {
+app.get(/^(?!\/api).*/, (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
