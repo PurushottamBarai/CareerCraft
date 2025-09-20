@@ -13,11 +13,11 @@ const app = express();
 
 // Database configuration with Railway environment variables
 const dbConfig = {
-  host: process.env.MYSQL_HOST || process.env.DB_HOST || 'localhost',
-  user: process.env.MYSQL_USER || process.env.DB_USER || 'root',
-  password: process.env.MYSQL_PASSWORD || process.env.DB_PASS || '2006',
-  database: process.env.MYSQL_DATABASE || process.env.DB_NAME || 'careercraft',
-  port: process.env.MYSQL_PORT || process.env.DB_PORT || 3306,
+  host: process.env.MYSQLHOST || process.env.MYSQL_HOST || 'localhost',
+  user: process.env.MYSQLUSER || process.env.MYSQL_USER || 'root',
+  password: process.env.MYSQLPASSWORD || process.env.MYSQL_PASSWORD || '2006',
+  database: process.env.MYSQL_DATABASE || 'careercraft',
+  port: parseInt(process.env.MYSQLPORT || process.env.MYSQL_PORT || '3306'),
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
