@@ -6,40 +6,39 @@
     <title>CareerCraft</title>
     <link rel="stylesheet" href="styles.css" />
 <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+ <link rel="icon" type="image/png" href="fav.png">
   </head>
   <body>
     <nav class="navbar">
       <div class="nav-container">
-        <img class="logo" src="logo.png" alt="carreercraft" />
+        <img class="logo" src="ref.png" alt="carreercraft" />
         <div id="guestNavLinks" class="nav-links">
-          <div class="anc">
-            <a href="job.html">Jobs</a>
-            <a href="#companies">Companies</a>
-            <a href="#services">Services</a>
-          </div>
-          <div class="btn">
-            <button class="nav-btn login" onclick="showLogin()">Login</button>
-            <button class="nav-btn register" onclick="showStudentRegister()">
-              Register
-            </button>
-            <button class="nav-btn employer" id="logg" onclick="showEmployerRegister()">
-              Employer
-            </button>
-            <button class="nav-btn employer" id="logg"> Admin</button>
-          </div>
-        </div>
+  <div class="anc">
+    <a href="job.html">Jobs</a>
+    <a href="#companies">Companies</a>
+    <a href="#services">Services</a>
+  </div>
+  <div class="btn">
+    <button class="nav-btn login" onclick="showLogin()">Login</button>
+    
+    <div class="register-menu">
+      <button class="nav-btn register" onclick="toggleRegisterDropdown(event)">
+        Register
+      </button>
+      <div id="registerDropdown" class="register-dropdown hidden">
+        <a href="#" onclick="showStudentRegister()">Student</a>
+        <a href="#" onclick="showEmployerRegister()">Recruiter</a>
+      </div>
+    </div>
+    
+  </div>
+</div>
 
         <div id="userNavLinks" class="nav-links hidden">
           <span id="welcomeMessage" class="welcome-text"></span>
           <div class="profile-menu">
-            <button class="profile-btn" onclick="toggleProfileDropdown()">
-              <img
-                id="profileImage"
-                src="/api/placeholder-profile.png"
-                class="profile-image"
-              />
+         <button class="profile-btn">
               <span id="profileName"></span>
-              <span class="dropdown-arrow">▼</span>
             </button>
             <div id="profileDropdown" class="profile-dropdown">
               <a href="#" onclick="showProfile()">View Profile</a>
@@ -58,7 +57,7 @@
         <div class="form-container">
           <h2>Login</h2>
           <form id="loginFormData">
-            <input type="email" name="email" placeholder="Email" required />
+            <input type="text" name="email" placeholder="Email or Username" required />
             <input
               type="password"
               name="password"

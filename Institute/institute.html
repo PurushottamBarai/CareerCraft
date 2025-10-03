@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Institute Admin - CareerCraft</title>
+    <link rel="stylesheet" href="institute-style.css">
+    
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <img class="logo" src="../ref.png" alt="CareerCraft">
+            <div class="nav-links">
+                <span class="admin-title">Institute Admin</span>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- <div id="loginSection" class="login-container">
+        <div class="login-box">
+            <h2>Institute Admin Login</h2>
+            <form id="adminLoginForm">
+                <input type="text" id="adminUsername" placeholder="Admin Username" required>
+                <input type="password" id="adminPassword" placeholder="Admin Password" required>
+                <button type="submit">Login</button>
+            </form>
+            <p class="error-msg" id="loginError"></p>
+        </div>
+    </div> -->
+    <div id="loadingSection" class="login-container hidden">
+    <div class="login-box">
+        <h2>Loading...</h2>
+    </div>
+</div>
+
+    <div id="adminPanel" class="container hidden">
+        <div class="dashboard-header">
+            <h1>Institute Dashboard</h1>
+            <div class="stats-overview">
+                <div class="stat-box">
+                    <span class="stat-number" id="totalStudents">0</span>
+                    <span class="stat-label">Total Students</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-number" id="totalEmployers">0</span>
+                    <span class="stat-label">Total Employers</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-number" id="totalJobs">0</span>
+                    <span class="stat-label">Total Jobs</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-number" id="totalApplications">0</span>
+                    <span class="stat-label">Total Applications</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('students')">Students</button>
+            <button class="tab-btn" onclick="showTab('employers')">Employers</button>
+            <button class="tab-btn" onclick="showTab('jobs')">Jobs</button>
+            <button class="tab-btn" onclick="showTab('applications')">Applications</button>
+            <button class="tab-btn" onclick="showTab('messages')">Messages</button>
+        </div>
+
+        <div id="studentsTab" class="tab-content">
+            <h2>Registered Students</h2>
+            <div class="search-box">
+                <input type="text" id="studentSearch" placeholder="Search students by name, email, college..." onkeyup="filterStudents()">
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>College</th>
+                            <th>Course</th>
+                            <th>Graduation Year</th>
+                            <th>Phone</th>
+                            <th>Registered</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentsTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="employersTab" class="tab-content hidden">
+            <h2>Registered Employers</h2>
+            <div class="search-box">
+                <input type="text" id="employerSearch" placeholder="Search employers by name, email, company..." onkeyup="filterEmployers()">
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Company</th>
+                            <th>Phone</th>
+                            <th>Jobs Posted</th>
+                            <th>Registered</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="employersTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="jobsTab" class="tab-content hidden">
+            <h2>All Jobs</h2>
+            <div class="search-box">
+                <input type="text" id="jobSearch" placeholder="Search jobs by title, company, skills..." onkeyup="filterJobs()">
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Title</th>
+                            <th>Company</th>
+                            <th>Location</th>
+                            <th>Skills</th>
+                            <th>Experience</th>
+                            <th>Applications</th>
+                            <th>Posted</th>
+                        </tr>
+                    </thead>
+                    <tbody id="jobsTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="applicationsTab" class="tab-content hidden">
+            <h2>All Applications</h2>
+            <div class="search-box">
+                <input type="text" id="applicationSearch" placeholder="Search applications..." onkeyup="filterApplications()">
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Student</th>
+                            <th>Job Title</th>
+                            <th>Company</th>
+                            <th>Applied Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="applicationsTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="messagesTab" class="tab-content hidden">
+            <h2>Messages & Notifications</h2>
+            <div class="messages-container">
+                <div class="message-filters">
+                    <button class="filter-btn active" onclick="filterMessages('all')">All</button>
+                    <button class="filter-btn" onclick="filterMessages('student')">From Students</button>
+                    <button class="filter-btn" onclick="filterMessages('employer')">From Employers</button>
+                </div>
+                <div id="messagesContent">
+                    <p class="info-text">No messages available. This section will display contact messages from students and employers.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="userDetailModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h2 id="modalTitle">User Details</h2>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <script src="institute-script.js"></script>
+</body>
+</html>

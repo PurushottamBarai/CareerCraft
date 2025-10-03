@@ -5,7 +5,7 @@
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: Open Sans, Arial, sans-serif;
     background-color: #f5f5f5;
     color: #333;
     line-height: 1.6;
@@ -37,14 +37,50 @@ body {
 
 .logo {
     cursor: pointer;
-    height: 4rem;
-    
+    height: 3rem;
+    padding-bottom: 3px;
 }
 
 .nav-links {
     display: flex;
     align-items: center;
     gap:2.5rem;
+}
+.register-menu {
+    position: relative;
+}
+
+.register-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(186, 185, 185, 0.1);
+    min-width: 170px;
+    z-index: 1000;
+    margin-top: 2rem;
+    padding-left: 1rem;
+}
+
+.register-dropdown a {
+    display: block;
+    padding: 0.75rem 1rem;
+    color: #333;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.register-dropdown a:hover {
+    background-color: #f8f9fa;
+    color: #FF5A5F;
+}
+
+.register-dropdown.hidden {
+    display: none;
 }
 .nav-links a {
     color: #445578;
