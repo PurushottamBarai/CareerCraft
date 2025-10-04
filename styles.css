@@ -50,6 +50,10 @@ body {
     position: relative;
 }
 
+.container.home-active {
+    max-width: 100%;
+    padding: 0;
+}
 .register-dropdown {
     position: absolute;
     top: 100%;
@@ -238,6 +242,7 @@ body {
 
 .form-section {
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     min-height: 70vh;
