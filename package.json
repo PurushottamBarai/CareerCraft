@@ -1,7 +1,7 @@
 {
   "name": "careercraft",
   "version": "1.0.0",
-  "description": "A full-stack job portal application for students and employers",
+  "description": "A full-stack Online Training and Placement Cell platform",
   "main": "server.js",
   
   "scripts": {
@@ -12,7 +12,7 @@
   }
 ,
   "keywords": ["job-portal", "nodejs", "mysql", "express", "railway"],
-  "author": "Your Name",
+  "author": "Purushottam",
   "license": "MIT",
   "dependencies": {
     "bcryptjs": "^3.0.2",

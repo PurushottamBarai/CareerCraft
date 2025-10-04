@@ -33,17 +33,31 @@ function setupEventListeners() {
     document.getElementById('postJobForm').addEventListener('submit', handlePostJob);
     document.getElementById('applyJobForm').addEventListener('submit', handleApplyJob);
     
+    // Handle clicks outside dropdowns to close them
     document.addEventListener('click', function(e) {
+        // Handle profile dropdown
         const profileDropdown = document.getElementById('profileDropdown');
         const profileBtn = document.querySelector('.profile-btn');
         
-        if (!profileBtn || !profileDropdown) return;
+        if (profileBtn && profileDropdown) {
+            // Check if click is on the profile button
+            if (profileBtn.contains(e.target)) {
+                e.stopPropagation();
+                profileDropdown.classList.toggle('hidden');
+            } else if (!profileDropdown.contains(e.target)) {
+                // Click outside both button and dropdown - close it
+                profileDropdown.classList.add('hidden');
+            }
+        }
         
-        if (profileBtn.contains(e.target)) {
-            e.stopPropagation();
-            profileDropdown.classList.toggle('hidden');
-        } else {
-            profileDropdown.classList.add('hidden');
+        // Handle register dropdown
+        const registerDropdown = document.getElementById('registerDropdown');
+        const registerBtn = document.querySelector('.register-menu .nav-btn.register');
+        
+        if (registerDropdown && registerBtn) {
+            if (!registerBtn.contains(e.target) && !registerDropdown.contains(e.target)) {
+                registerDropdown.classList.add('hidden');
+            }
         }
     });
 }
@@ -146,11 +160,17 @@ function showLogin() {
 function showEmployerRegister() {
     hideAllSections();
     document.getElementById('employerRegister').classList.remove('hidden');
+    // Close register dropdown
+    const dropdown = document.getElementById('registerDropdown');
+    if (dropdown) dropdown.classList.add('hidden');
 }
 
 function showStudentRegister() {
     hideAllSections();
     document.getElementById('studentRegister').classList.remove('hidden');
+    // Close register dropdown
+    const dropdown = document.getElementById('registerDropdown');
+    if (dropdown) dropdown.classList.add('hidden');
 }
 
 function showEmployerDashboard() {
@@ -226,9 +246,14 @@ function setActiveTab(event) {
         }
     }
 }
+function toggleRegisterDropdown(event) {
+    event.stopPropagation();
+    const dropdown = document.getElementById('registerDropdown');
+    dropdown.classList.toggle('hidden');
+}
 
 // Profile functions
-function toggleProfileDropdown(event) {
+function profileDropdown(event) {
     if (event) {
         event.stopPropagation();
     }
@@ -308,7 +333,11 @@ async function handleLogin(e) {
             localStorage.setItem('user', JSON.stringify(currentUser));
             localStorage.setItem('token', result.token);
             
-            if (currentUser.role === 'employer') {
+            // Check user role and redirect accordingly
+            if (currentUser.role === 'admin') {
+                // Redirect to institute admin panel
+                window.location.href = 'institute/institute.html';
+            } else if (currentUser.role === 'employer') {
                 showEmployerDashboard();
             } else {
                 showStudentDashboard();
@@ -702,7 +731,6 @@ async function loadStudentStats() {
     }
 }
 
-// Application modal functions
 function openApplyModal(jobId, jobTitle, companyName) {
     document.getElementById('applyJobId').value = jobId;
     document.getElementById('jobDetails').innerHTML = `
