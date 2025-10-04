@@ -288,37 +288,37 @@ const sendEmail = async (to, subject, html, userId, type) => {
 // Auth routes
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const { firstName, lastName, username, email, password, role, companyName, college, course, graduationYear, phone, address } = req.body;
+    const { firstName, username, email, password, role, companyName, course, graduationYear, phone, address } = req.body;
     
-    const [existingUsers] = await db.query(
-      'SELECT id FROM users WHERE email = ? OR username = ?',
-      [email, username]
-    );
+    // Check existing email (username no longer required to be unique)
+    const [existingUsers] = await db.query('SELECT id FROM users WHERE email = ?', [email]);
     
     if (existingUsers.length > 0) {
-      return res.status(400).json({ message: 'User with this email or username already exists' });
+      return res.status(400).json({ message: 'User with this email already exists' });
     }
     
     const hashedPassword = await bcrypt.hash(password, 12);
     
+    // Generate username from email if not provided
+    const finalUsername = username || email.split('@')[0];
+    
     const [result] = await db.query(
-      `INSERT INTO users (firstName, lastName, username, email, password, role, companyName, college, course, graduationYear, phone, address)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [firstName, lastName, username, email, hashedPassword, role, companyName || null, college || null, course || null, graduationYear || null, phone || null, address || null]
+      `INSERT INTO users (firstName, lastName, username, email, password, role, companyName, course, graduationYear, phone, address)
+       VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [firstName, finalUsername, email, hashedPassword, role, companyName || null, course || null, graduationYear || null, phone || null, address || null]
     );
 
     const emailHtml = `
       <h1>Welcome to CareerCraft!</h1>
       <p>Dear ${firstName},</p>
       <p>Thank you for registering as a ${role}. Your account has been created successfully.</p>
-      <p>You can now log in and start using our platform.</p>
-      <br><p>Best regards,<br>The CareerCraft Team</p>
+      <p>Best regards,<br>The CareerCraft Team</p>
     `;
     
     await sendEmail(email, 'Welcome to CareerCraft', emailHtml, result.insertId, 'registration');
     
     res.status(201).json({ 
-      message: 'Registration successful! Please check your email for confirmation.',
+      message: 'Registration successful!',
       userId: result.insertId 
     });
   } catch (err) {
@@ -716,7 +716,7 @@ app.get('/api/stats/student', auth, requireRole(['student']), async (req, res) =
 app.get('/api/auth/profile', auth, async (req, res) => {
   try {
     const [users] = await db.query(
-      'SELECT id, firstName, lastName, username, email, role, companyName, college, course, graduationYear, phone, address, profileImage, createdAt FROM users WHERE id = ?',
+      'SELECT id, firstName, username, email, role, companyName, college, course, graduationYear, phone, address, profileImage, createdAt FROM users WHERE id = ?',
       [req.user.id]
     );
     
@@ -734,9 +734,8 @@ app.get('/api/auth/profile', auth, async (req, res) => {
 // Post a new job (for employers)
 app.post('/api/jobs', auth, requireRole(['employer']), async (req, res) => {
   try {
-    const { title, description, skills, experienceYears, experienceMonths, location, salary } = req.body;
+    const { title, description, skills, experienceYears, location, salary } = req.body;
     
-    // Validation
     if (!title || !description || !skills || !location) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
@@ -746,18 +745,17 @@ app.post('/api/jobs', auth, requireRole(['employer']), async (req, res) => {
     }
     
     const [result] = await db.query(
-      `INSERT INTO jobs (employerId, title, description, skills, experienceYears, experienceMonths, location, salary)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO jobs (employerId, title, description, skills, experienceYears, location, salary)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,  // 7 placeholders
       [
         req.user.id,
         title,
         description,
         JSON.stringify(skills),
         experienceYears || 0,
-        experienceMonths || 0,
         location,
         salary || null
-      ]
+      ]  // 7 values
     );
     
     res.status(201).json({
