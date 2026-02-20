@@ -459,6 +459,7 @@ async function handleStudentRegister(e) {
   
   const registerData = {
     firstName: formData.get('firstName'),
+    lastName: formData.get('firstName'), 
     username: formData.get('username'),
     email: formData.get('email'),
     course: formData.get('course'),

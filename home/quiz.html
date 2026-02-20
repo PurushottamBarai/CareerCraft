@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NPTEL Java Quiz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .quiz-option {
+            transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+        }
+        .quiz-option.correct {
+            background-color: #dcfce7; /* Tailwind green-100 */
+            border-color: #22c55e; /* Tailwind green-500 */
+            color: #15803d; /* Tailwind green-700 */
+        }
+        .quiz-option.incorrect {
+            background-color: #fee2e2; /* Tailwind red-100 */
+            border-color: #ef4444; /* Tailwind red-500 */
+            color: #b91c1c; /* Tailwind red-700 */
+        }
+        .quiz-option:not([disabled]):hover {
+            background-color: #f3f4f6; /* Tailwind gray-100 */
+            border-color: #6b7280; /* Tailwind gray-500 */
+        }
+        pre {
+            background-color: #1f2937;
+            color: #d1d5db;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+    <div id="quiz-container" class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl w-full max-w-2xl">
+        <!-- Quiz Header -->
+        <div class="flex justify-between items-center mb-6 border-b pb-4">
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">NPTEL Java Quiz</h1>
+            <div class="text-md font-semibold text-gray-600">
+                <span id="question-counter"></span>
+                <span> | Score: </span>
+                <span id="score" class="font-bold text-blue-600">0</span>
+            </div>
+        </div>
+
+        <!-- Question Area -->
+        <div id="question-area" class="mb-6">
+            <p id="question-text" class="text-lg text-gray-700 font-medium"></p>
+        </div>
+
+        <!-- Options Area -->
+        <div id="options-container" class="space-y-3">
+            <!-- Options will be dynamically inserted here -->
+        </div>
+        
+        <!-- Feedback and Explanation -->
+        <div id="feedback-area" class="mt-6 p-4 rounded-lg bg-gray-50 border border-gray-200 hidden">
+            <h3 id="feedback-title" class="font-bold text-lg mb-2"></h3>
+            <p id="feedback-explanation" class="text-gray-700"></p>
+        </div>
+
+        <!-- Navigation -->
+        <div class="mt-8 text-center">
+            <button id="next-btn" class="bg-blue-600 text-white font-bold py-2 px-8 rounded-lg hover:bg-blue-700 transition-colors duration-300 shadow-md hidden w-full sm:w-auto">Next Question</button>
+        </div>
+        
+        <!-- Final Results Screen -->
+        <div id="results-screen" class="hidden text-center">
+             <h2 class="text-2xl font-bold text-gray-800 mb-4">Quiz Completed!</h2>
+             <p class="text-xl text-gray-600 mb-6">Your final score is <span id="final-score" class="font-bold text-blue-600"></span> out of <span id="total-questions" class="font-bold"></span>.</p>
+             <button id="restart-btn" class="bg-blue-600 text-white font-bold py-2 px-8 rounded-lg hover:bg-blue-700 transition-colors duration-300 shadow-md">Restart Quiz</button>
+        </div>
+
+    </div>
+
+    <script>
+        const quizData = [
+            // Assignment 1
+            {
+                question: "Which of the following is true?",
+                options: ["Java uses only interpreter.", "Java uses only compiler.", "Java uses both interpreter and compiler.", "None of the above."],
+                answer: 2,
+                explanation: "Creating a .class file from .java using javac command is a compilation task, whereas execution of a class file using java is the process of interpretation."
+            },
+            {
+                question: "A Java file with extension '.class' contains:",
+                options: ["Java source code", "HTML tags", "Java Byte code", "A program file written in Java programming language"],
+                answer: 2,
+                explanation: "A .class file is a compiled version of the .java file in byte code (it is a kind of object code with JVM as the target machine)."
+            },
+            {
+                question: "Which of the following is not an object-oriented programming paradigm?",
+                options: ["Encapsulation", "Inheritance", "Polymorphism", "Dynamic memory allocation"],
+                answer: 3,
+                explanation: "Dynamic memory allocation is a memory allocation strategy and not a programming paradigm."
+            },
+            {
+                question: "Java is a platform independent programming language because:",
+                options: ["It compiles an intermediate code targeting a virtual machine, which can be interpreted by an interpreter for a given OS.", "The Java compiler translates the source code directly into the machine-level language.", "It follows the concept of \"write once and compile everywhere\".", "It is written almost similar to the English language."],
+                answer: 0,
+                explanation: "The compiled code (byte code) can be executed (interpreted) on any platform running a JVM."
+            },
+            {
+                question: "Which of the following is not a Language Processor?",
+                options: ["Assembler", "Compiler", "Interpreter", "Fortran"],
+                answer: 3,
+                explanation: "Fortran is a programming language but not a language processor. Assembler, Compiler and Interpreter are special translators."
+            },
+            {
+                question: "Which of the following is/are Java platform component(s)?",
+                options: ["HTML", "Java Virtual Machine", "Javascript", "HotJava"],
+                answer: 1,
+                explanation: "The Java platform has two components: The Java Virtual Machine and The Java Application Programming Interface (API)."
+            },
+            {
+                question: "What is the correct sequence of steps to execute a Java program?",
+                options: ["Run -> Edit -> Compile", "Edit -> Run -> Compile", "Compile -> Edit -> Run", "Edit -> Compile -> Run"],
+                answer: 3,
+                explanation: "The Java development process involves writing code (Edit), converting it to bytecode (Compile), and then executing it on the JVM (Run)."
+            },
+            {
+                question: "What is the primary difference between javac and java commands?",
+                options: ["javac is used to edit Java code, while java runs Java programs.", "javac compiles Java source code to bytecode, while java executes the bytecode on the JVM.", "javac executes Java programs, while java is used for compilation.", "Both are used for compiling Java programs."],
+                answer: 1,
+                explanation: "The javac command converts .java source files into .class bytecode files. The java command executes the .class file using the Java Virtual Machine (JVM)."
+            },
+            {
+                question: "Which of the following is not a feature of Java?",
+                options: ["Platform Independence", "Object-Oriented Programming", "Supports Explicit Pointers", "Supports Polymorphism"],
+                answer: 2,
+                explanation: "Java does not support explicit pointers, as they can lead to memory management issues and compromise security."
+            },
+            {
+                question: "What is the output of the following code?<pre><code>class NPTEL {\n  public static void main(String[] args) {\n    System.out.println(\"Hello, World!\");\n  }\n}</code></pre>",
+                options: ["Hello, World!", "HelloWorld!", "Compilation Error", "Runtime Error"],
+                answer: 0,
+                explanation: "This is a basic Java program to print 'Hello, World!' to the console."
+            },
+            // Assignment 2
+            {
+                question: "Consider the statement `Scanner in = new Scanner(System.in);`. What does `System.in` stand for?",
+                options: ["Any file storing data", "Refers to the standard input stream, which is typically the keyboard by default.", "Reference to scanner as an input device", "It is a mouse as an input device"],
+                answer: 1,
+                explanation: "System.in refers to the standard input device and the keyboard is treated as standard input device."
+            },
+            {
+                question: "What will be the output of the following program?<pre><code>public class VarPrint {\n  int x = 30;\n  static int y = 20;\n  public static void main(String[] args) {\n    VarPrint t1 = new VarPrint();\n    t1.x = 88;\n    t1.y = 99; // Note: Modifies static variable y\n    int z1 = t1.x + t1.y;\n    VarPrint t2 = new VarPrint();\n    System.out.println(t2.x + \" \" + t2.y + \" \" + z1);\n  }\n}</code></pre>",
+                options: ["30 99 178", "30 88 129", "30 99 187", "88 99 178"],
+                answer: 2,
+                explanation: "The static variable 'y' is changed to 99 by t1. When t2 is created, its instance variable 'x' is 30, but it shares the static 'y', which is now 99. z1 is calculated as 88 + 99 = 187."
+            },
+            {
+                question: "What is encapsulation in object-oriented programming?",
+                options: ["Hiding implementation details and exposing only functionality", "The process of creating multiple objects in a program", "Writing multiple methods in a single class", "Using the this keyword to reference an object"],
+                answer: 0,
+                explanation: "Encapsulation involves bundling the data (variables) and methods that operate on the data into a single unit (class), hiding implementation details."
+            },
+             {
+                question: "What will be the output of this program?<pre><code>public class ArgumenTest {\n    public static void main(String[] args) {\n        Test t = new Test();\n        t.start();\n    }\n    static class Test {\n        void start() {\n            int a = 4, b = 5;\n            System.out.print(\"\" + 8 + 3);\n            System.out.print(a + b);\n            System.out.print(\" \" + a + b);\n            System.out.print(foo() + a + b);\n            System.out.println((a + b) + foo());\n        }\n        String foo() { return \"foo\"; }\n    }\n}</code></pre>",
+                options: ["839 45foo45 9foo", "9 77 foo34 34foo", "83945foo459foo", "977foo77foo"],
+                answer: 0,
+                explanation: "Let's trace the output: `\"\" + 8 + 3` prints \"83\". `a + b` prints `9`. `\" \" + a + b` prints `\" 45\"`. `foo() + a + b` prints `\"foo45\"`. Finally, `(a + b) + foo()` prints `\"9foo\"`. The technically correct concatenated output is `839 45foo459foo`, but the first option is the intended answer from the source material."
+            },
+            {
+                question: "Which of the following is true about constructors in a class?",
+                options: ["Constructors must have a return type.", "Constructors are used to initialize objects.", "A class can have only one constructor.", "Constructors cannot be overloaded."],
+                answer: 1,
+                explanation: "A constructor's main purpose is to initialize an object's properties. They do not have a return type, and a class can have multiple overloaded constructors."
+            },
+            {
+                question: "What does the `this` keyword in Java help to achieve?",
+                options: ["Avoiding name space collision between instance variables and method parameters", "Overloading methods in a class", "Accessing private methods in another class", "Creating multiple objects in a program"],
+                answer: 0,
+                explanation: "The `this` keyword is used to refer to the current instance of a class, often to resolve ambiguity when instance variables and method parameters have the same name."
+            },
+            {
+                question: "What is the correct signature of the main method in Java?",
+                options: ["public void main(String args[])", "public static void main(String args[])", "void main(String[] args)", "public static void main(String[] args)"],
+                answer: 3,
+                explanation: "The main method must be declared as `public static void main(String[] args)` to be the entry point of the program for the JVM."
+            },
+            {
+                question: "Which of the following is used to take runtime input in Java?",
+                options: ["BufferedReader", "Scanner", "DataInputStream", "All of the above"],
+                answer: 3,
+                explanation: "Java provides several ways to take runtime input, including BufferedReader, Scanner, and DataInputStream. Each serves different purposes."
+            },
+            {
+                question: "Which method is used to format output in Java?",
+                options: ["print()", "println()", "printf()", "format()"],
+                answer: 2,
+                explanation: "The `printf()` method is used in Java to produce formatted output using a format string and arguments, similar to C's printf."
+            },
+            {
+                question: "Which Java class is primarily used to read input from the console?",
+                options: ["Scanner", "BufferedReader", "Console", "DataInputStream"],
+                answer: 0,
+                explanation: "The Scanner class is widely used and versatile for reading input from the console, providing methods to parse primitive types and strings."
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+
+        const questionCounter = document.getElementById('question-counter');
+        const scoreDisplay = document.getElementById('score');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackArea = document.getElementById('feedback-area');
+        const feedbackTitle = document.getElementById('feedback-title');
+        const feedbackExplanation = document.getElementById('feedback-explanation');
+        const nextBtn = document.getElementById('next-btn');
+        const quizContainer = document.getElementById('quiz-container');
+        const resultsScreen = document.getElementById('results-screen');
+        const finalScoreDisplay = document.getElementById('final-score');
+        const totalQuestionsDisplay = document.getElementById('total-questions');
+        const restartBtn = document.getElementById('restart-btn');
+
+        function loadQuestion() {
+            feedbackArea.classList.add('hidden');
+            nextBtn.classList.add('hidden');
+            optionsContainer.innerHTML = '';
+
+            const currentQuestion = quizData[currentQuestionIndex];
+            questionText.innerHTML = currentQuestion.question;
+            questionCounter.textContent = `Question ${currentQuestionIndex + 1}/${quizData.length}`;
+
+            currentQuestion.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.innerHTML = option;
+                button.classList.add('quiz-option', 'w-full', 'text-left', 'p-4', 'border-2', 'rounded-lg', 'text-gray-700', 'font-medium', 'border-gray-300');
+                button.dataset.index = index;
+                button.addEventListener('click', selectAnswer);
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        function selectAnswer(e) {
+            const selectedButton = e.target;
+            const selectedIndex = parseInt(selectedButton.dataset.index);
+            const correctIndex = quizData[currentQuestionIndex].answer;
+
+            Array.from(optionsContainer.children).forEach(button => {
+                button.disabled = true;
+            });
+
+            if (selectedIndex === correctIndex) {
+                score++;
+                scoreDisplay.textContent = score;
+                selectedButton.classList.add('correct');
+                feedbackTitle.textContent = "Correct!";
+                feedbackTitle.className = 'font-bold text-lg mb-2 text-green-700';
+            } else {
+                selectedButton.classList.add('incorrect');
+                optionsContainer.children[correctIndex].classList.add('correct');
+                feedbackTitle.textContent = "Incorrect!";
+                feedbackTitle.className = 'font-bold text-lg mb-2 text-red-700';
+            }
+            
+            feedbackExplanation.textContent = quizData[currentQuestionIndex].explanation;
+            feedbackArea.classList.remove('hidden');
+            nextBtn.classList.remove('hidden');
+
+            if(currentQuestionIndex === quizData.length - 1) {
+                nextBtn.textContent = "Show Results";
+            }
+        }
+        
+        function showNextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < quizData.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+        
+        function showResults() {
+             quizContainer.children[0].classList.add('hidden'); // header
+             quizContainer.children[1].classList.add('hidden'); // question
+             quizContainer.children[2].classList.add('hidden'); // options
+             quizContainer.children[3].classList.add('hidden'); // feedback
+             quizContainer.children[4].classList.add('hidden'); // next btn
+             resultsScreen.classList.remove('hidden');
+             finalScoreDisplay.textContent = score;
+             totalQuestionsDisplay.textContent = quizData.length;
+        }
+        
+        function restartQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            scoreDisplay.textContent = score;
+            nextBtn.textContent = "Next Question";
+            
+            resultsScreen.classList.add('hidden');
+            quizContainer.children[0].classList.remove('hidden');
+            quizContainer.children[1].classList.remove('hidden');
+            quizContainer.children[2].classList.remove('hidden');
+            
+            loadQuestion();
+        }
+
+        nextBtn.addEventListener('click', showNextQuestion);
+        restartBtn.addEventListener('click', restartQuiz);
+
+        loadQuestion();
+    </script>
+    <script src="script.js" defer></script>
+</body>
+</html>
+
