@@ -140,15 +140,17 @@ app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? [
         process.env.FRONTEND_URL,
-        /https:\/\/.*\.railway\.app$/,  
+        /https:\/\/.*\.railway\.app$/,
         /https:\/\/.*\.up\.railway\.app$/
       ]
     : ['http://localhost:3000', 'http://localhost:5000'],
   credentials: true
 }));
+
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 app.use(express.static(__dirname));
+
 const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
     const uploadDir = 'uploads/';
@@ -164,6 +166,7 @@ const storage = multer.diskStorage({
     cb(null, uniqueSuffix + '-' + file.originalname);
   }
 });
+
 const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
@@ -179,11 +182,13 @@ const upload = multer({
   },
   limits: { fileSize: 5 * 1024 * 1024 }
 });
+
 // Email configuration
 let transporter = null;
 console.log('Checking email configuration...');
 console.log('EMAIL_USER:', process.env.EMAIL_USER ? 'Set' : 'Not set');
 console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? 'Set' : 'Not set');
+
 if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
   try {
     transporter = nodemailer.createTransport({
@@ -207,17 +212,20 @@ if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
 } else {
   console.warn('Email credentials not configured. Emails will not be sent.');
 }
+
 const auth = (req, res, next) => {
   const header = req.headers['authorization'];
   if (!header) {
     console.log('No authorization header provided');
     return res.status(401).json({ message: 'No token provided' });
   }
+  
   const token = header.split(' ')[1];
   if (!token) {
     console.log('No token found in authorization header');
     return res.status(401).json({ message: 'No token provided' });
   }
+  
   jwt.verify(token, process.env.JWT_SECRET || '#Purushottam2006', (err, user) => {
     if (err) {
       console.log('Token verification failed:', err.message);
@@ -227,12 +235,14 @@ const auth = (req, res, next) => {
     next();
   });
 };
+
 const requireRole = (roles) => (req, res, next) => {
   if (!roles.includes(req.user.role)) {
     return res.status(403).json({ message: 'Access denied' });
   }
   next();
 };
+
 const sendEmail = async (to, subject, html, userId, type) => {
   try {
     console.log(`Attempting to send email to: ${to}`);
@@ -397,6 +407,7 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 // ============ ADMIN ROUTES ============
+
 // Admin authentication middleware
 const adminAuth = (req, res, next) => {
   const header = req.headers['authorization'];
@@ -435,9 +446,9 @@ app.get('/api/admin/users', adminAuth, async (req, res) => {
 app.get('/api/admin/students', adminAuth, async (req, res) => {
   try {
     const [rows] = await db.query(
-      `SELECT id, firstName, lastName, username, email, college, course, graduationYear, phone, address, createdAt \
-       FROM users \
-       WHERE role = 'student' \
+      `SELECT id, firstName, lastName, username, email, college, course, graduationYear, phone, address, createdAt 
+       FROM users 
+       WHERE role = 'student' 
        ORDER BY createdAt DESC`
     );
     res.json(rows);
@@ -451,9 +462,9 @@ app.get('/api/admin/students', adminAuth, async (req, res) => {
 app.get('/api/admin/employers', adminAuth, async (req, res) => {
   try {
     const [rows] = await db.query(
-      `SELECT id, firstName, lastName, username, email, companyName, phone, address, createdAt \
-       FROM users \
-       WHERE role = 'employer' \
+      `SELECT id, firstName, lastName, username, email, companyName, phone, address, createdAt 
+       FROM users 
+       WHERE role = 'employer' 
        ORDER BY createdAt DESC`
     );
     res.json(rows);
@@ -467,7 +478,10 @@ app.get('/api/admin/employers', adminAuth, async (req, res) => {
 app.get('/api/admin/jobs', adminAuth, async (req, res) => {
   try {
     const [rows] = await db.query(
-      `SELECT j.*, u.firstName as employerFirstName, u.lastName as employerLastName, u.companyName\n       FROM jobs j\n       INNER JOIN users u ON j.employerId = u.id\n       ORDER BY j.createdAt DESC`
+      `SELECT j.*, u.firstName as employerFirstName, u.lastName as employerLastName, u.companyName
+       FROM jobs j
+       INNER JOIN users u ON j.employerId = u.id
+       ORDER BY j.createdAt DESC`
     );
     
     const processedJobs = rows.map(job => {
@@ -495,8 +509,15 @@ app.get('/api/admin/jobs', adminAuth, async (req, res) => {
 app.get('/api/admin/applications', adminAuth, async (req, res) => {
   try {
     const [rows] = await db.query(
-      `SELECT a.*, \
-              s.firstName as studentFirstName, s.lastName as studentLastName,\n              j.title as jobTitle,\n              e.firstName as employerFirstName, e.lastName as employerLastName, e.companyName\n       FROM applications a\n       INNER JOIN users s ON a.studentId = s.id\n       INNER JOIN jobs j ON a.jobId = j.id\n       INNER JOIN users e ON j.employerId = e.id\n       ORDER BY a.appliedDate DESC`
+      `SELECT a.*, 
+              s.firstName as studentFirstName, s.lastName as studentLastName,
+              j.title as jobTitle,
+              e.firstName as employerFirstName, e.lastName as employerLastName, e.companyName
+       FROM applications a
+       INNER JOIN users s ON a.studentId = s.id
+       INNER JOIN jobs j ON a.jobId = j.id
+       INNER JOIN users e ON j.employerId = e.id
+       ORDER BY a.appliedDate DESC`
     );
     res.json(rows);
   } catch (error) {
@@ -528,13 +549,19 @@ app.get('/api/admin/stats', adminAuth, async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch statistics' });
   }
 });
+// Add these routes to your server.js file, after the existing job routes
 
 // Get jobs posted by the logged-in employer
 app.get('/api/jobs/employer', auth, requireRole(['employer']), async (req, res) => {
   try {
     const [jobs] = await db.query(
-      `SELECT j.*, \
-              COUNT(DISTINCT a.id) as applicationCount\n       FROM jobs j\n       LEFT JOIN applications a ON j.id = a.jobId\n       WHERE j.employerId = ?\n       GROUP BY j.id\n       ORDER BY j.createdAt DESC`,
+      `SELECT j.*, 
+              COUNT(DISTINCT a.id) as applicationCount
+       FROM jobs j
+       LEFT JOIN applications a ON j.id = a.jobId
+       WHERE j.employerId = ?
+       GROUP BY j.id
+       ORDER BY j.createdAt DESC`,
       [req.user.id]
     );
     
@@ -555,10 +582,14 @@ app.get('/api/jobs/employer', auth, requireRole(['employer']), async (req, res) 
 app.get('/api/jobs', auth, async (req, res) => {
   try {
     const [jobs] = await db.query(
-      `SELECT j.*, \
-              u.firstName as employerFirstName, \ 
-              u.lastName as employerLastName,\ 
-              u.companyName\n       FROM jobs j\n       INNER JOIN users u ON j.employerId = u.id\n       WHERE j.isActive = TRUE\n       ORDER BY j.createdAt DESC`
+      `SELECT j.*, 
+              u.firstName as employerFirstName, 
+              u.lastName as employerLastName,
+              u.companyName
+       FROM jobs j
+       INNER JOIN users u ON j.employerId = u.id
+       WHERE j.isActive = TRUE
+       ORDER BY j.createdAt DESC`
     );
     
     // Parse skills JSON for each job
@@ -578,7 +609,18 @@ app.get('/api/jobs', auth, async (req, res) => {
 app.get('/api/applications/job/:jobId', auth, requireRole(['employer']), async (req, res) => {
   try {
     const [applications] = await db.query(
-      `SELECT a.*, \n              s.firstName as studentFirstName, \n              s.lastName as studentLastName,\n              s.email as studentEmail,\n              s.phone,\n              s.college,\n              s.course\n       FROM applications a\n       INNER JOIN users s ON a.studentId = s.id\n       INNER JOIN jobs j ON a.jobId = j.id\n       WHERE a.jobId = ? AND j.employerId = ?\n       ORDER BY a.appliedDate DESC`,
+      `SELECT a.*, 
+              s.firstName as studentFirstName, 
+              s.lastName as studentLastName,
+              s.email as studentEmail,
+              s.phone,
+              s.college,
+              s.course
+       FROM applications a
+       INNER JOIN users s ON a.studentId = s.id
+       INNER JOIN jobs j ON a.jobId = j.id
+       WHERE a.jobId = ? AND j.employerId = ?
+       ORDER BY a.appliedDate DESC`,
       [req.params.jobId, req.user.id]
     );
     
@@ -593,7 +635,16 @@ app.get('/api/applications/job/:jobId', auth, requireRole(['employer']), async (
 app.get('/api/applications/student', auth, requireRole(['student']), async (req, res) => {
   try {
     const [applications] = await db.query(
-      `SELECT a.*, \n              j.title as jobTitle,\n              u.firstName as employerFirstName,\n              u.lastName as employerLastName,\n              u.companyName\n       FROM applications a\n       INNER JOIN jobs j ON a.jobId = j.id\n       INNER JOIN users u ON j.employerId = u.id\n       WHERE a.studentId = ?\n       ORDER BY a.appliedDate DESC`,
+      `SELECT a.*, 
+              j.title as jobTitle,
+              u.firstName as employerFirstName,
+              u.lastName as employerLastName,
+              u.companyName
+       FROM applications a
+       INNER JOIN jobs j ON a.jobId = j.id
+       INNER JOIN users u ON j.employerId = u.id
+       WHERE a.studentId = ?
+       ORDER BY a.appliedDate DESC`,
       [req.user.id]
     );
     
@@ -613,7 +664,14 @@ app.get('/api/stats/employer', auth, requireRole(['employer']), async (req, res)
     );
     
     const [appStats] = await db.query(
-      `SELECT \n        COUNT(*) as totalApplications,\n        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pendingApplications,\n        SUM(CASE WHEN status = 'accepted' THEN 1 ELSE 0 END) as acceptedApplications,\n        SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejectedApplications\n       FROM applications a\n       INNER JOIN jobs j ON a.jobId = j.id\n       WHERE j.employerId = ?`,
+      `SELECT 
+        COUNT(*) as totalApplications,
+        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pendingApplications,
+        SUM(CASE WHEN status = 'accepted' THEN 1 ELSE 0 END) as acceptedApplications,
+        SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejectedApplications
+       FROM applications a
+       INNER JOIN jobs j ON a.jobId = j.id
+       WHERE j.employerId = ?`,
       [req.user.id]
     );
     
@@ -634,7 +692,13 @@ app.get('/api/stats/employer', auth, requireRole(['employer']), async (req, res)
 app.get('/api/stats/student', auth, requireRole(['student']), async (req, res) => {
   try {
     const [stats] = await db.query(
-      `SELECT \n        COUNT(*) as totalApplications,\n        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pendingApplications,\n        SUM(CASE WHEN status = 'accepted' THEN 1 ELSE 0 END) as acceptedApplications,\n        SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejectedApplications\n       FROM applications\n       WHERE studentId = ?`,
+      `SELECT 
+        COUNT(*) as totalApplications,
+        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pendingApplications,
+        SUM(CASE WHEN status = 'accepted' THEN 1 ELSE 0 END) as acceptedApplications,
+        SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejectedApplications
+       FROM applications
+       WHERE studentId = ?`,
       [req.user.id]
     );
     
@@ -683,7 +747,8 @@ app.post('/api/jobs', auth, requireRole(['employer']), async (req, res) => {
     }
     
     const [result] = await db.query(
-      `INSERT INTO jobs (employerId, title, description, skills, experienceYears, location, salary)\n       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO jobs (employerId, title, description, skills, experienceYears, location, salary)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,  // 7 placeholders
       [
         req.user.id,
         title,
@@ -692,7 +757,7 @@ app.post('/api/jobs', auth, requireRole(['employer']), async (req, res) => {
         experienceYears || 0,
         location,
         salary || null
-      ]
+      ]  // 7 values
     );
     
     res.status(201).json({
@@ -717,7 +782,10 @@ app.patch('/api/applications/:id/status', auth, requireRole(['employer']), async
     
     // Verify the employer owns the job this application belongs to
     const [applications] = await db.query(
-      `SELECT a.*, j.employerId \n       FROM applications a\n       INNER JOIN jobs j ON a.jobId = j.id\n       WHERE a.id = ?`,
+      `SELECT a.*, j.employerId 
+       FROM applications a
+       INNER JOIN jobs j ON a.jobId = j.id
+       WHERE a.id = ?`,
       [applicationId]
     );
     
@@ -762,7 +830,8 @@ app.post('/api/applications', auth, requireRole(['student']), upload.single('res
     }
     
     const [result] = await db.query(
-      `INSERT INTO applications (jobId, studentId, resumePath, coverLetter)\n       VALUES (?, ?, ?, ?)`,
+      `INSERT INTO applications (jobId, studentId, resumePath, coverLetter)
+       VALUES (?, ?, ?, ?)`,
       [jobId, req.user.id, resumePath, coverLetter || null]
     );
     
@@ -776,24 +845,16 @@ app.post('/api/applications', auth, requireRole(['student']), upload.single('res
   }
 });
 
-// Catch-all route for SPA - serve actual files if they exist, otherwise index.html
-app.get('*', async (req, res, next) => {
-  if (req.path.startsWith('/api')) return next();
-  const filePath = path.join(__dirname, req.path);
-  try {
-    const stat = await fs.stat(filePath);
-    if (stat.isFile()) {
-      return res.sendFile(filePath);
-    }
-    res.sendFile(path.join(__dirname, 'index.html'));
-  } catch (e) {
-    res.sendFile(path.join(__dirname, 'index.html'));
-  }
+// Catch-all route for SPA
+app.get(/^(?!\/api).*/, (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
+
 app.use((err, req, res, next) => {
   console.error('Error:', err.stack);
   res.status(500).json({ message: 'Internal server error', error: err.message });
 });
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
