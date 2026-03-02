@@ -457,9 +457,11 @@ async function handleStudentRegister(e) {
     return;
   }
   
+  const fullName = formData.get('firstName').trim();
+  const nameParts = fullName.split(' ');
   const registerData = {
-    firstName: formData.get('firstName'),
-    lastName: formData.get('firstName'), 
+    firstName: nameParts[0],
+    lastName: nameParts.slice(1).join(' ') || '',
     username: formData.get('username'),
     email: formData.get('email'),
     course: formData.get('course'),
