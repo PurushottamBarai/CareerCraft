@@ -1,15 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CareerCraft - Home</title>
     <link rel="stylesheet" href="home-style.css">
-     <link rel="stylesheet" href="footer/footer.css"> 
+    <link rel="stylesheet" href="footer/footer.css">
 </head>
+
 <body>
     <section class="hero-section">
         <h1>Take charge of your career <br> with confidence</h1>
+        <p class="hero-subtitle">Discover opportunities, test your skills, and connect with top employers.</p>
+        <div class="hero-cta">
+            <button class="hero-btn primary" onclick="showBrowseJobs(event)">Find Jobs</button>
+            <button class="hero-btn secondary" onclick="showEmployerRegister()">For Employers</button>
+        </div>
+
+        <!-- Trusted Companies Carousel -->
+        <div class="trusted-companies">
+            <p class="trusted-label">Trusted by industry leaders</p>
+            <div class="carousel-container">
+                <div class="carousel-track">
+                    <!-- Logos -->
+                    <div class="carousel-logo"><span class="brand-tata">TCS</span></div>
+                    <div class="carousel-logo"><span class="brand-google">Google</span></div>
+                    <div class="carousel-logo"><span class="brand-ms">Microsoft</span></div>
+                    <div class="carousel-logo"><span class="brand-amzn">Amazon</span></div>
+                    <div class="carousel-logo"><span class="brand-infy">Infosys</span></div>
+                    <div class="carousel-logo"><span class="brand-wipro">Wipro</span></div>
+
+                    <!-- Duplicated for infinite scroll effect -->
+                    <div class="carousel-logo"><span class="brand-tata">TCS</span></div>
+                    <div class="carousel-logo"><span class="brand-google">Google</span></div>
+                    <div class="carousel-logo"><span class="brand-ms">Microsoft</span></div>
+                    <div class="carousel-logo"><span class="brand-amzn">Amazon</span></div>
+                    <div class="carousel-logo"><span class="brand-infy">Infosys</span></div>
+                    <div class="carousel-logo"><span class="brand-wipro">Wipro</span></div>
+                </div>
+            </div>
+        </div>
     </section>
 
     <section class="features-section">
@@ -65,7 +96,7 @@
                     </svg>
                 </div>
                 <div class="feature-content" id="quiz">
-                    <h3 >Take Quiz</h3>
+                    <h3>Take Quiz</h3>
                     <span class="arrow">></span>
                 </div>
             </div>
@@ -99,8 +130,9 @@
             </div>
         </div>
     </section>
-    
+
     <div class="banner"></div>
-<script src="../script.js"></script>
+    <script src="../script.js"></script>
 </body>
+
 </html>

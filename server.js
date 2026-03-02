@@ -1,46 +1,52 @@
-require('dotenv').config();
-const express = require('express');
-const mysql = require('mysql2/promise');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const multer = require('multer');
-const cors = require('cors');
-const nodemailer = require('nodemailer');
-const path = require('path');
-const fs = require('fs').promises;
+require("dotenv").config();
+const express = require("express");
+const mysql = require("mysql2/promise");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const multer = require("multer");
+const cors = require("cors");
+const nodemailer = require("nodemailer");
+const path = require("path");
+const fs = require("fs").promises;
+const { GoogleGenAI } = require("@google/genai");
+
+// Initialize Gemini Client
+const ai = process.env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }) : null;
 
 const app = express();
 
 const dbConfig = {
-  host: process.env.MYSQLHOST || process.env.MYSQL_HOST || 'localhost',
-  user: process.env.MYSQLUSER || process.env.MYSQL_USER || 'root',
-  password: process.env.MYSQLPASSWORD || process.env.MYSQL_PASSWORD || '2006',
-  database: process.env.MYSQL_DATABASE || 'careercraft',
-  port: parseInt(process.env.MYSQLPORT || process.env.MYSQL_PORT || '3306'),
+  host: process.env.MYSQLHOST || process.env.MYSQL_HOST || "localhost",
+  user: process.env.MYSQLUSER || process.env.MYSQL_USER || "root",
+  password: process.env.MYSQLPASSWORD || process.env.MYSQL_PASSWORD || "",
+  database: process.env.MYSQL_DATABASE || "careercraft",
+  port: parseInt(process.env.MYSQLPORT || process.env.MYSQL_PORT || "3306"),
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  ssl: process.env.NODE_ENV === 'production' ? {
-    rejectUnauthorized: false
-  } : false
+  ssl:
+    process.env.NODE_ENV === "production"
+      ? {
+          rejectUnauthorized: false,
+        }
+      : false,
 };
-if (process.env.NODE_ENV !== 'production') {
-  console.log('DB Environment Check:');
-  console.log('MYSQLHOST:', process.env.MYSQLHOST);
-  console.log('MYSQLUSER:', process.env.MYSQLUSER);
-  console.log('Final host:', dbConfig.host);
+if (process.env.NODE_ENV !== "production") {
+  console.log("DB Environment Check:");
+  console.log("MYSQLHOST:", process.env.MYSQLHOST);
+  console.log("MYSQLUSER:", process.env.MYSQLUSER);
+  console.log("Final host:", dbConfig.host);
 
-  console.log('Database config:', {
+  console.log("Database config:", {
     host: dbConfig.host,
     user: dbConfig.user,
     database: dbConfig.database,
     port: dbConfig.port,
-    ssl: dbConfig.ssl ? 'enabled' : 'disabled'
+    ssl: dbConfig.ssl ? "enabled" : "disabled",
   });
 }
 
 let db;
-
 
 async function setupTables() {
   try {
@@ -116,44 +122,69 @@ async function setupTables() {
       )
     `);
 
-    console.log('Database tables created/verified');
+    console.log("Database tables created/verified");
   } catch (error) {
-    console.error('Database setup error:', error);
+    console.error("Database setup error:", error);
+  }
+  // Create admin table securely ignoring previous schemas
+  try {
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS admin (
+          id INT PRIMARY KEY AUTO_INCREMENT,
+          username VARCHAR(50) UNIQUE NOT NULL,
+          password VARCHAR(255) NOT NULL,
+          createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    const [admins] = await db.execute(
+      "SELECT COUNT(*) as count FROM admin",
+    );
+    if (admins[0].count === 0) {
+      const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD || "admin123", 12);
+      await db.execute(
+        "INSERT INTO admin (username, password) VALUES (?, ?)",
+        [process.env.ADMIN_USERNAME || "admin", hashedPassword],
+      );
+    }
+  } catch (error) {
+    console.error("Admin table setup error:", error);
   }
 }
-
 
 (async () => {
   try {
     db = await mysql.createPool(dbConfig);
-    const [rows] = await db.execute('SELECT 1 as test');
-    console.log('Database connected successfully:', rows);
-    
+    const [rows] = await db.execute("SELECT 1 as test");
+    console.log("Database connected successfully:", rows);
+
     await setupTables();
-    
   } catch (err) {
-    console.error('Database connection failed:', err.message);
+    console.error("Database connection failed:", err.message);
   }
 })();
 
-app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? [
-        process.env.FRONTEND_URL,
-        /https:\/\/.*\.railway\.app$/,
-        /https:\/\/.*\.up\.railway\.app$/
-      ]
-    : ['http://localhost:3000', 'http://localhost:5000'],
-  credentials: true
-}));
+app.use(
+  cors({
+    origin:
+      process.env.NODE_ENV === "production"
+        ? [
+            process.env.FRONTEND_URL,
+            /https:\/\/.*\.railway\.app$/,
+            /https:\/\/.*\.up\.railway\.app$/,
+          ]
+        : ["http://localhost:3000", "http://localhost:5000"],
+    credentials: true,
+  }),
+);
 
 app.use(express.json());
-app.use('/uploads', express.static('uploads'));
+app.use("/uploads", express.static("uploads"));
 app.use(express.static(__dirname));
 
 const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
-    const uploadDir = 'uploads/';
+    const uploadDir = "uploads/";
     try {
       await fs.mkdir(uploadDir, { recursive: true });
       cb(null, uploadDir);
@@ -162,83 +193,89 @@ const storage = multer.diskStorage({
     }
   },
   filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + '-' + file.originalname);
-  }
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + "-" + file.originalname);
+  },
 });
 
 const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
     const allowedTypes = /jpeg|jpg|png|pdf|doc|docx/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const extname = allowedTypes.test(
+      path.extname(file.originalname).toLowerCase(),
+    );
     const mimetype = allowedTypes.test(file.mimetype);
-    
+
     if (mimetype && extname) {
       return cb(null, true);
     } else {
-      cb(new Error('Only images and documents are allowed!'));
+      cb(new Error("Only images and documents are allowed!"));
     }
   },
-  limits: { fileSize: 5 * 1024 * 1024 }
+  limits: { fileSize: 5 * 1024 * 1024 },
 });
 
 // Email configuration
 let transporter = null;
-console.log('Checking email configuration...');
-console.log('EMAIL_USER:', process.env.EMAIL_USER ? 'Set' : 'Not set');
-console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? 'Set' : 'Not set');
+console.log("Checking email configuration...");
+console.log("EMAIL_USER:", process.env.EMAIL_USER ? "Set" : "Not set");
+console.log("EMAIL_PASS:", process.env.EMAIL_PASS ? "Set" : "Not set");
 
 if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
   try {
     transporter = nodemailer.createTransport({
-      service: 'gmail',
+      service: "gmail",
       auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
+        pass: process.env.EMAIL_PASS,
+      },
     });
-    
+
     transporter.verify((error, success) => {
       if (error) {
-        console.error('Email configuration error:', error);
+        console.error("Email configuration error:", error);
       } else {
-        console.log('Email server is ready to send messages');
+        console.log("Email server is ready to send messages");
       }
     });
   } catch (error) {
-    console.error('Error creating email transporter:', error);
+    console.error("Error creating email transporter:", error);
   }
 } else {
-  console.warn('Email credentials not configured. Emails will not be sent.');
+  console.warn("Email credentials not configured. Emails will not be sent.");
 }
 
 const auth = (req, res, next) => {
-  const header = req.headers['authorization'];
+  const header = req.headers["authorization"];
   if (!header) {
-    console.log('No authorization header provided');
-    return res.status(401).json({ message: 'No token provided' });
+    console.log("No authorization header provided");
+    return res.status(401).json({ message: "No token provided" });
   }
-  
-  const token = header.split(' ')[1];
+
+  const token = header.split(" ")[1];
   if (!token) {
-    console.log('No token found in authorization header');
-    return res.status(401).json({ message: 'No token provided' });
+    console.log("No token found in authorization header");
+    return res.status(401).json({ message: "No token provided" });
   }
-  
-  jwt.verify(token, process.env.JWT_SECRET || '#Purushottam2006', (err, user) => {
-    if (err) {
-      console.log('Token verification failed:', err.message);
-      return res.status(403).json({ message: 'Invalid token' });
-    }
-    req.user = user;
-    next();
-  });
+
+  jwt.verify(
+    token,
+    process.env.JWT_SECRET || "fallback_secret_for_dev_only",
+    (err, user) => {
+      if (err) {
+        console.log("Token verification failed:", err.message);
+        return res.status(403).json({ message: "Invalid token" });
+      }
+      req.user = user;
+      next();
+    },
+  );
 };
 
 const requireRole = (roles) => (req, res, next) => {
   if (!roles.includes(req.user.role)) {
-    return res.status(403).json({ message: 'Access denied' });
+    return res.status(403).json({ message: "Access denied" });
   }
   next();
 };
@@ -247,67 +284,94 @@ const sendEmail = async (to, subject, html, userId, type) => {
   try {
     console.log(`Attempting to send email to: ${to}`);
     console.log(`Subject: ${subject}`);
-    
+
     if (transporter) {
       const mailOptions = {
         from: `"CareerCraft" <${process.env.EMAIL_USER}>`,
         to: to,
         subject: subject,
-        html: html
+        html: html,
       };
-      
+
       const info = await transporter.sendMail(mailOptions);
-      console.log('Email sent successfully:', info.messageId);
-      
+      console.log("Email sent successfully:", info.messageId);
+
       if (db) {
         await db.query(
-          'INSERT INTO email_notifications (userId, email, subject, message, type, status) VALUES (?, ?, ?, ?, ?, ?)',
-          [userId, to, subject, html, type, 'sent']
+          "INSERT INTO email_notifications (userId, email, subject, message, type, status) VALUES (?, ?, ?, ?, ?, ?)",
+          [userId, to, subject, html, type, "sent"],
         );
       }
     } else {
-      console.log('Email transporter not available');
-      
+      console.log("Email transporter not available");
+
       if (db) {
         await db.query(
-          'INSERT INTO email_notifications (userId, email, subject, message, type, status) VALUES (?, ?, ?, ?, ?, ?)',
-          [userId, to, subject, 'Email service not configured', type, 'failed']
+          "INSERT INTO email_notifications (userId, email, subject, message, type, status) VALUES (?, ?, ?, ?, ?, ?)",
+          [userId, to, subject, "Email service not configured", type, "failed"],
         );
       }
     }
   } catch (error) {
-    console.error('Email sending error:', error);
-    
+    console.error("Email sending error:", error);
+
     if (db) {
       await db.query(
-        'INSERT INTO email_notifications (userId, email, subject, message, type, status) VALUES (?, ?, ?, ?, ?, ?)',
-        [userId, to, subject, error.message, type, 'failed']
+        "INSERT INTO email_notifications (userId, email, subject, message, type, status) VALUES (?, ?, ?, ?, ?, ?)",
+        [userId, to, subject, error.message, type, "failed"],
       );
     }
   }
 };
 
 // Auth routes
-app.post('/api/auth/register', async (req, res) => {
+app.post("/api/auth/register", async (req, res) => {
   try {
-    const { firstName, username, email, password, role, companyName, course, graduationYear, phone, address } = req.body;
-    
+    const {
+      firstName,
+      username,
+      email,
+      password,
+      role,
+      companyName,
+      course,
+      graduationYear,
+      phone,
+      address,
+    } = req.body;
+
     // Check existing email (username no longer required to be unique)
-    const [existingUsers] = await db.query('SELECT id FROM users WHERE email = ?', [email]);
-    
+    const [existingUsers] = await db.query(
+      "SELECT id FROM users WHERE email = ?",
+      [email],
+    );
+
     if (existingUsers.length > 0) {
-      return res.status(400).json({ message: 'User with this email already exists' });
+      return res
+        .status(400)
+        .json({ message: "User with this email already exists" });
     }
-    
+
     const hashedPassword = await bcrypt.hash(password, 12);
-    
+
     // Generate username from email if not provided
-    const finalUsername = username || email.split('@')[0];
-    
+    const finalUsername = username || email.split("@")[0];
+
     const [result] = await db.query(
       `INSERT INTO users (firstName, lastName, username, email, password, role, companyName, course, graduationYear, phone, address)
        VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [firstName, finalUsername, email, hashedPassword, role, companyName || null, course || null, graduationYear || null, phone || null, address || null]
+      [
+        firstName,
+        finalUsername,
+        email,
+        hashedPassword,
+        role,
+        companyName || null,
+        course || null,
+        graduationYear || null,
+        phone || null,
+        address || null,
+      ],
     );
 
     const emailHtml = `
@@ -316,84 +380,98 @@ app.post('/api/auth/register', async (req, res) => {
       <p>Thank you for registering as a ${role}. Your account has been created successfully.</p>
       <p>Best regards,<br>The CareerCraft Team</p>
     `;
-    
-    await sendEmail(email, 'Welcome to CareerCraft', emailHtml, result.insertId, 'registration');
-    
-    res.status(201).json({ 
-      message: 'Registration successful!',
-      userId: result.insertId 
+
+    await sendEmail(
+      email,
+      "Welcome to CareerCraft",
+      emailHtml,
+      result.insertId,
+      "registration",
+    );
+
+    res.status(201).json({
+      message: "Registration successful!",
+      userId: result.insertId,
     });
   } catch (err) {
-    console.error('Registration error:', err);
-    res.status(500).json({ message: 'Registration failed', error: err.message });
+    console.error("Registration error:", err);
+    res
+      .status(500)
+      .json({ message: "Registration failed", error: err.message });
   }
 });
 
-app.post('/api/auth/login', async (req, res) => {
+app.post("/api/auth/login", async (req, res) => {
   try {
     const { email, password } = req.body;
-    
+
     // First check if it's an admin login
     const [adminRows] = await db.query(
-      "SELECT * FROM admin WHERE username = ?", 
-      [email]
+      "SELECT * FROM admin WHERE username = ?",
+      [email],
     );
-    
+
     if (adminRows.length > 0) {
       const admin = adminRows[0];
-      
+
       // Check password (plain text or hashed)
       let valid = false;
-      if (admin.password.startsWith('$2a$') || admin.password.startsWith('$2b$')) {
+      if (
+        admin.password.startsWith("$2a$") ||
+        admin.password.startsWith("$2b$")
+      ) {
         valid = await bcrypt.compare(password, admin.password);
       } else {
         valid = password === admin.password;
       }
-      
+
       if (!valid) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
-      
+
       const token = jwt.sign(
-        { username: admin.username, role: 'admin' }, 
-        process.env.JWT_SECRET || '#Purushottam2006',
-        { expiresIn: '24h' }
+        { username: admin.username, role: "admin" },
+        process.env.JWT_SECRET || "fallback_secret_for_dev_only",
+        { expiresIn: "24h" },
       );
-      
-      return res.json({ 
-        user: { 
-          username: admin.username, 
-          firstName: 'Admin',
-          lastName: 'User',
-          role: 'admin' 
-        }, 
-        token 
+
+      return res.json({
+        user: {
+          username: admin.username,
+          firstName: "Admin",
+          lastName: "User",
+          role: "admin",
+        },
+        token,
       });
     }
-    
+
     // If not admin, check regular users (student/employer)
     const [rows] = await db.query(
-      "SELECT * FROM users WHERE email = ? OR username = ?", 
-      [email, email]
+      "SELECT * FROM users WHERE email = ? OR username = ?",
+      [email, email],
     );
-    
+
     if (rows.length === 0) {
       return res.status(400).json({ message: "User not found" });
     }
 
     const user = rows[0];
     const valid = await bcrypt.compare(password, user.password);
-    
+
     if (!valid) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    await db.query('UPDATE users SET updatedAt = CURRENT_TIMESTAMP WHERE id = ?', [user.id]);
+    await db.query(
+      "UPDATE users SET updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
+      [user.id],
+    );
 
     const token = jwt.sign(
-      { id: user.id, role: user.role, email: user.email }, 
-      process.env.JWT_SECRET || '#Purushottam2006',
-      { expiresIn: '24h' }
+      { id: user.id, role: user.role, email: user.email },
+      process.env.JWT_SECRET || "fallback_secret_for_dev_only",
+      { expiresIn: "24h" },
     );
 
     delete user.password;
@@ -401,7 +479,7 @@ app.post('/api/auth/login', async (req, res) => {
 
     res.json({ user, token });
   } catch (error) {
-    console.error('Login error:', error);
+    console.error("Login error:", error);
     res.status(500).json({ message: "Login failed", error: error.message });
   }
 });
@@ -410,84 +488,88 @@ app.post('/api/auth/login', async (req, res) => {
 
 // Admin authentication middleware
 const adminAuth = (req, res, next) => {
-  const header = req.headers['authorization'];
+  const header = req.headers["authorization"];
   if (!header) {
-    return res.status(401).json({ message: 'No token provided' });
+    return res.status(401).json({ message: "No token provided" });
   }
-  
-  const token = header.split(' ')[1];
+
+  const token = header.split(" ")[1];
   if (!token) {
-    return res.status(403).json({ message: 'Admin access required' });
+    return res.status(403).json({ message: "Admin access required" });
   }
-  
-  jwt.verify(token, process.env.JWT_SECRET || '#Purushottam2006', (err, decoded) => {
-    if (err || decoded.role !== 'admin') {
-      return res.status(403).json({ message: 'Admin access required' });
-    }
-    req.user = decoded;
-    next();
-  });
+
+  jwt.verify(
+    token,
+    process.env.JWT_SECRET || "fallback_secret_for_dev_only",
+    (err, decoded) => {
+      if (err || decoded.role !== "admin") {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      req.user = decoded;
+      next();
+    },
+  );
 };
 
 // Get all users
-app.get('/api/admin/users', adminAuth, async (req, res) => {
+app.get("/api/admin/users", adminAuth, async (req, res) => {
   try {
     const [rows] = await db.query(
-      'SELECT id, firstName, lastName, username, email, role, companyName, college, course, graduationYear, phone, address, createdAt FROM users ORDER BY createdAt DESC'
+      "SELECT id, firstName, lastName, username, email, role, companyName, college, course, graduationYear, phone, address, createdAt FROM users ORDER BY createdAt DESC",
     );
     res.json(rows);
   } catch (error) {
-    console.error('Admin users fetch error:', error);
-    res.status(500).json({ message: 'Failed to fetch users' });
+    console.error("Admin users fetch error:", error);
+    res.status(500).json({ message: "Failed to fetch users" });
   }
 });
 
 // Get all students
-app.get('/api/admin/students', adminAuth, async (req, res) => {
+app.get("/api/admin/students", adminAuth, async (req, res) => {
   try {
     const [rows] = await db.query(
       `SELECT id, firstName, lastName, username, email, college, course, graduationYear, phone, address, createdAt 
        FROM users 
        WHERE role = 'student' 
-       ORDER BY createdAt DESC`
+       ORDER BY createdAt DESC`,
     );
     res.json(rows);
   } catch (error) {
-    console.error('Admin students fetch error:', error);
-    res.status(500).json({ message: 'Failed to fetch students' });
+    console.error("Admin students fetch error:", error);
+    res.status(500).json({ message: "Failed to fetch students" });
   }
 });
 
 // Get all employers
-app.get('/api/admin/employers', adminAuth, async (req, res) => {
+app.get("/api/admin/employers", adminAuth, async (req, res) => {
   try {
     const [rows] = await db.query(
       `SELECT id, firstName, lastName, username, email, companyName, phone, address, createdAt 
        FROM users 
        WHERE role = 'employer' 
-       ORDER BY createdAt DESC`
+       ORDER BY createdAt DESC`,
     );
     res.json(rows);
   } catch (error) {
-    console.error('Admin employers fetch error:', error);
-    res.status(500).json({ message: 'Failed to fetch employers' });
+    console.error("Admin employers fetch error:", error);
+    res.status(500).json({ message: "Failed to fetch employers" });
   }
 });
 
 // Get all jobs
-app.get('/api/admin/jobs', adminAuth, async (req, res) => {
+app.get("/api/admin/jobs", adminAuth, async (req, res) => {
   try {
     const [rows] = await db.query(
       `SELECT j.*, u.firstName as employerFirstName, u.lastName as employerLastName, u.companyName
        FROM jobs j
        INNER JOIN users u ON j.employerId = u.id
-       ORDER BY j.createdAt DESC`
+       ORDER BY j.createdAt DESC`,
     );
-    
-    const processedJobs = rows.map(job => {
+
+    const processedJobs = rows.map((job) => {
       let skills = [];
       try {
-        if (typeof job.skills === 'string') {
+        if (typeof job.skills === "string") {
           skills = JSON.parse(job.skills);
         } else if (Array.isArray(job.skills)) {
           skills = job.skills;
@@ -497,16 +579,16 @@ app.get('/api/admin/jobs', adminAuth, async (req, res) => {
       }
       return { ...job, skills };
     });
-    
+
     res.json(processedJobs);
   } catch (error) {
-    console.error('Admin jobs fetch error:', error);
-    res.status(500).json({ message: 'Failed to fetch jobs' });
+    console.error("Admin jobs fetch error:", error);
+    res.status(500).json({ message: "Failed to fetch jobs" });
   }
 });
 
 // Get all applications
-app.get('/api/admin/applications', adminAuth, async (req, res) => {
+app.get("/api/admin/applications", adminAuth, async (req, res) => {
   try {
     const [rows] = await db.query(
       `SELECT a.*, 
@@ -517,99 +599,117 @@ app.get('/api/admin/applications', adminAuth, async (req, res) => {
        INNER JOIN users s ON a.studentId = s.id
        INNER JOIN jobs j ON a.jobId = j.id
        INNER JOIN users e ON j.employerId = e.id
-       ORDER BY a.appliedDate DESC`
+       ORDER BY a.appliedDate DESC`,
     );
     res.json(rows);
   } catch (error) {
-    console.error('Admin applications fetch error:', error);
-    res.status(500).json({ message: 'Failed to fetch applications' });
+    console.error("Admin applications fetch error:", error);
+    res.status(500).json({ message: "Failed to fetch applications" });
   }
 });
 
 // Get admin statistics
-app.get('/api/admin/stats', adminAuth, async (req, res) => {
+app.get("/api/admin/stats", adminAuth, async (req, res) => {
   try {
     const [studentCount] = await db.query(
-      "SELECT COUNT(*) as count FROM users WHERE role = 'student'"
+      "SELECT COUNT(*) as count FROM users WHERE role = 'student'",
     );
     const [employerCount] = await db.query(
-      "SELECT COUNT(*) as count FROM users WHERE role = 'employer'"
+      "SELECT COUNT(*) as count FROM users WHERE role = 'employer'",
     );
-    const [jobCount] = await db.query('SELECT COUNT(*) as count FROM jobs');
-    const [applicationCount] = await db.query('SELECT COUNT(*) as count FROM applications');
-    
+    const [jobCount] = await db.query("SELECT COUNT(*) as count FROM jobs");
+    const [applicationCount] = await db.query(
+      "SELECT COUNT(*) as count FROM applications",
+    );
+
     res.json({
       totalStudents: studentCount[0].count,
       totalEmployers: employerCount[0].count,
       totalJobs: jobCount[0].count,
-      totalApplications: applicationCount[0].count
+      totalApplications: applicationCount[0].count,
     });
   } catch (error) {
-    console.error('Admin stats fetch error:', error);
-    res.status(500).json({ message: 'Failed to fetch statistics' });
+    console.error("Admin stats fetch error:", error);
+    res.status(500).json({ message: "Failed to fetch statistics" });
   }
 });
 // Add these routes to your server.js file, after the existing job routes
 
 // Get jobs posted by the logged-in employer
-app.get('/api/jobs/employer', auth, requireRole(['employer']), async (req, res) => {
-  try {
-    const [jobs] = await db.query(
-      `SELECT j.*, 
+app.get(
+  "/api/jobs/employer",
+  auth,
+  requireRole(["employer"]),
+  async (req, res) => {
+    try {
+      const [jobs] = await db.query(
+        `SELECT j.*, 
               COUNT(DISTINCT a.id) as applicationCount
        FROM jobs j
        LEFT JOIN applications a ON j.id = a.jobId
        WHERE j.employerId = ?
        GROUP BY j.id
        ORDER BY j.createdAt DESC`,
-      [req.user.id]
-    );
-    
-    // Parse skills JSON for each job
-    const processedJobs = jobs.map(job => ({
-      ...job,
-      skills: typeof job.skills === 'string' ? JSON.parse(job.skills) : job.skills
-    }));
-    
-    res.json(processedJobs);
-  } catch (error) {
-    console.error('Error fetching employer jobs:', error);
-    res.status(500).json({ message: 'Failed to fetch jobs' });
-  }
-});
+        [req.user.id],
+      );
+
+      // Parse skills JSON for each job
+      const processedJobs = jobs.map((job) => ({
+        ...job,
+        skills:
+          typeof job.skills === "string" ? JSON.parse(job.skills) : job.skills,
+      }));
+
+      res.json(processedJobs);
+    } catch (error) {
+      console.error("Error fetching employer jobs:", error);
+      res.status(500).json({ message: "Failed to fetch jobs" });
+    }
+  },
+);
 
 // Get all jobs (for students)
-app.get('/api/jobs', auth, async (req, res) => {
+app.get("/api/jobs", auth, async (req, res) => {
   try {
+    const studentId = req.user.id;
     const [jobs] = await db.query(
       `SELECT j.*, 
               u.firstName as employerFirstName, 
               u.lastName as employerLastName,
-              u.companyName
+              u.companyName,
+              CASE WHEN a.id IS NOT NULL THEN TRUE ELSE FALSE END as hasApplied
        FROM jobs j
        INNER JOIN users u ON j.employerId = u.id
+       LEFT JOIN applications a ON j.id = a.jobId AND a.studentId = ?
        WHERE j.isActive = TRUE
-       ORDER BY j.createdAt DESC`
+       ORDER BY j.createdAt DESC`,
+      [studentId]
     );
-    
+
     // Parse skills JSON for each job
-    const processedJobs = jobs.map(job => ({
+    const processedJobs = jobs.map((job) => ({
       ...job,
-      skills: typeof job.skills === 'string' ? JSON.parse(job.skills) : job.skills
+      hasApplied: !!job.hasApplied,
+      skills:
+        typeof job.skills === "string" ? JSON.parse(job.skills) : job.skills,
     }));
-    
+
     res.json(processedJobs);
   } catch (error) {
-    console.error('Error fetching jobs:', error);
-    res.status(500).json({ message: 'Failed to fetch jobs' });
+    console.error("Error fetching jobs:", error);
+    res.status(500).json({ message: "Failed to fetch jobs" });
   }
 });
 
 // Get applications for a specific job (for employers)
-app.get('/api/applications/job/:jobId', auth, requireRole(['employer']), async (req, res) => {
-  try {
-    const [applications] = await db.query(
-      `SELECT a.*, 
+app.get(
+  "/api/applications/job/:jobId",
+  auth,
+  requireRole(["employer"]),
+  async (req, res) => {
+    try {
+      const [applications] = await db.query(
+        `SELECT a.*, 
               s.firstName as studentFirstName, 
               s.lastName as studentLastName,
               s.email as studentEmail,
@@ -621,21 +721,26 @@ app.get('/api/applications/job/:jobId', auth, requireRole(['employer']), async (
        INNER JOIN jobs j ON a.jobId = j.id
        WHERE a.jobId = ? AND j.employerId = ?
        ORDER BY a.appliedDate DESC`,
-      [req.params.jobId, req.user.id]
-    );
-    
-    res.json(applications);
-  } catch (error) {
-    console.error('Error fetching job applications:', error);
-    res.status(500).json({ message: 'Failed to fetch applications' });
-  }
-});
+        [req.params.jobId, req.user.id],
+      );
+
+      res.json(applications);
+    } catch (error) {
+      console.error("Error fetching job applications:", error);
+      res.status(500).json({ message: "Failed to fetch applications" });
+    }
+  },
+);
 
 // Get student's applications
-app.get('/api/applications/student', auth, requireRole(['student']), async (req, res) => {
-  try {
-    const [applications] = await db.query(
-      `SELECT a.*, 
+app.get(
+  "/api/applications/student",
+  auth,
+  requireRole(["student"]),
+  async (req, res) => {
+    try {
+      const [applications] = await db.query(
+        `SELECT a.*, 
               j.title as jobTitle,
               u.firstName as employerFirstName,
               u.lastName as employerLastName,
@@ -645,26 +750,31 @@ app.get('/api/applications/student', auth, requireRole(['student']), async (req,
        INNER JOIN users u ON j.employerId = u.id
        WHERE a.studentId = ?
        ORDER BY a.appliedDate DESC`,
-      [req.user.id]
-    );
-    
-    res.json(applications);
-  } catch (error) {
-    console.error('Error fetching student applications:', error);
-    res.status(500).json({ message: 'Failed to fetch applications' });
-  }
-});
+        [req.user.id],
+      );
+
+      res.json(applications);
+    } catch (error) {
+      console.error("Error fetching student applications:", error);
+      res.status(500).json({ message: "Failed to fetch applications" });
+    }
+  },
+);
 
 // Get employer statistics
-app.get('/api/stats/employer', auth, requireRole(['employer']), async (req, res) => {
-  try {
-    const [jobStats] = await db.query(
-      'SELECT COUNT(*) as totalJobs FROM jobs WHERE employerId = ?',
-      [req.user.id]
-    );
-    
-    const [appStats] = await db.query(
-      `SELECT 
+app.get(
+  "/api/stats/employer",
+  auth,
+  requireRole(["employer"]),
+  async (req, res) => {
+    try {
+      const [jobStats] = await db.query(
+        "SELECT COUNT(*) as totalJobs FROM jobs WHERE employerId = ?",
+        [req.user.id],
+      );
+
+      const [appStats] = await db.query(
+        `SELECT 
         COUNT(*) as totalApplications,
         SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pendingApplications,
         SUM(CASE WHEN status = 'accepted' THEN 1 ELSE 0 END) as acceptedApplications,
@@ -672,83 +782,118 @@ app.get('/api/stats/employer', auth, requireRole(['employer']), async (req, res)
        FROM applications a
        INNER JOIN jobs j ON a.jobId = j.id
        WHERE j.employerId = ?`,
-      [req.user.id]
-    );
-    
-    res.json({
-      totalJobs: jobStats[0].totalJobs || 0,
-      totalApplications: appStats[0].totalApplications || 0,
-      pendingApplications: appStats[0].pendingApplications || 0,
-      acceptedApplications: appStats[0].acceptedApplications || 0,
-      rejectedApplications: appStats[0].rejectedApplications || 0
-    });
-  } catch (error) {
-    console.error('Error fetching employer stats:', error);
-    res.status(500).json({ message: 'Failed to fetch statistics' });
-  }
-});
+        [req.user.id],
+      );
+
+      res.json({
+        totalJobs: jobStats[0].totalJobs || 0,
+        totalApplications: appStats[0].totalApplications || 0,
+        pendingApplications: appStats[0].pendingApplications || 0,
+        acceptedApplications: appStats[0].acceptedApplications || 0,
+        rejectedApplications: appStats[0].rejectedApplications || 0,
+      });
+    } catch (error) {
+      console.error("Error fetching employer stats:", error);
+      res.status(500).json({ message: "Failed to fetch statistics" });
+    }
+  },
+);
 
 // Get student statistics
-app.get('/api/stats/student', auth, requireRole(['student']), async (req, res) => {
-  try {
-    const [stats] = await db.query(
-      `SELECT 
+app.get(
+  "/api/stats/student",
+  auth,
+  requireRole(["student"]),
+  async (req, res) => {
+    try {
+      const [stats] = await db.query(
+        `SELECT 
         COUNT(*) as totalApplications,
         SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pendingApplications,
         SUM(CASE WHEN status = 'accepted' THEN 1 ELSE 0 END) as acceptedApplications,
         SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejectedApplications
        FROM applications
        WHERE studentId = ?`,
-      [req.user.id]
+        [req.user.id],
+      );
+
+      res.json({
+        totalApplications: stats[0].totalApplications || 0,
+        pendingApplications: stats[0].pendingApplications || 0,
+        acceptedApplications: stats[0].acceptedApplications || 0,
+        rejectedApplications: stats[0].rejectedApplications || 0,
+      });
+    } catch (error) {
+      console.error("Error fetching student stats:", error);
+      res.status(500).json({ message: "Failed to fetch statistics" });
+    }
+  },
+);
+
+// Get user profile
+app.get("/api/auth/profile", auth, async (req, res) => {
+  try {
+    const [users] = await db.query(
+      "SELECT id, firstName, username, email, role, companyName, college, course, graduationYear, phone, address, profileImage, createdAt FROM users WHERE id = ?",
+      [req.user.id],
     );
-    
-    res.json({
-      totalApplications: stats[0].totalApplications || 0,
-      pendingApplications: stats[0].pendingApplications || 0,
-      acceptedApplications: stats[0].acceptedApplications || 0,
-      rejectedApplications: stats[0].rejectedApplications || 0
-    });
+
+    if (users.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json(users[0]);
   } catch (error) {
-    console.error('Error fetching student stats:', error);
-    res.status(500).json({ message: 'Failed to fetch statistics' });
+    console.error("Error fetching profile:", error);
+    res.status(500).json({ message: "Failed to fetch profile" });
   }
 });
 
-// Get user profile
-app.get('/api/auth/profile', auth, async (req, res) => {
+// Update user profile
+app.put("/api/auth/profile", auth, async (req, res) => {
   try {
-    const [users] = await db.query(
-      'SELECT id, firstName, username, email, role, companyName, college, course, graduationYear, phone, address, profileImage, createdAt FROM users WHERE id = ?',
-      [req.user.id]
-    );
-    
-    if (users.length === 0) {
-      return res.status(404).json({ message: 'User not found' });
+    const { firstName, lastName, phone, address, companyName, college, course, graduationYear } = req.body;
+    const userId = req.user.id;
+    const role = req.user.role;
+
+    if (role === 'employer') {
+      await db.query(
+        "UPDATE users SET firstName = ?, lastName = ?, phone = ?, address = ?, companyName = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
+        [firstName || null, lastName || null, phone || null, address || null, companyName || null, userId]
+      );
+    } else if (role === 'student') {
+      await db.query(
+        "UPDATE users SET firstName = ?, lastName = ?, phone = ?, address = ?, college = ?, course = ?, graduationYear = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
+        [firstName || null, lastName || null, phone || null, address || null, college || null, course || null, graduationYear || null, userId]
+      );
     }
-    
-    res.json(users[0]);
+
+    res.json({ message: "Profile updated successfully" });
   } catch (error) {
-    console.error('Error fetching profile:', error);
-    res.status(500).json({ message: 'Failed to fetch profile' });
+    console.error("Error updating profile:", error);
+    res.status(500).json({ message: "Failed to update profile" });
   }
 });
 
 // Post a new job (for employers)
-app.post('/api/jobs', auth, requireRole(['employer']), async (req, res) => {
+app.post("/api/jobs", auth, requireRole(["employer"]), async (req, res) => {
   try {
-    const { title, description, skills, experienceYears, location, salary } = req.body;
-    
+    const { title, description, skills, experienceYears, location, salary } =
+      req.body;
+
     if (!title || !description || !skills || !location) {
-      return res.status(400).json({ message: 'Missing required fields' });
+      return res.status(400).json({ message: "Missing required fields" });
     }
-    
+
     if (!Array.isArray(skills) || skills.length === 0) {
-      return res.status(400).json({ message: 'At least one skill is required' });
+      return res
+        .status(400)
+        .json({ message: "At least one skill is required" });
     }
-    
+
     const [result] = await db.query(
       `INSERT INTO jobs (employerId, title, description, skills, experienceYears, location, salary)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,  // 7 placeholders
+       VALUES (?, ?, ?, ?, ?, ?, ?)`, // 7 placeholders
       [
         req.user.id,
         title,
@@ -756,108 +901,216 @@ app.post('/api/jobs', auth, requireRole(['employer']), async (req, res) => {
         JSON.stringify(skills),
         experienceYears || 0,
         location,
-        salary || null
-      ]  // 7 values
+        salary || null,
+      ], // 7 values
     );
-    
+
     res.status(201).json({
-      message: 'Job posted successfully',
-      jobId: result.insertId
+      message: "Job posted successfully",
+      jobId: result.insertId,
     });
   } catch (error) {
-    console.error('Error posting job:', error);
-    res.status(500).json({ message: 'Failed to post job', error: error.message });
+    console.error("Error posting job:", error);
+    res
+      .status(500)
+      .json({ message: "Failed to post job", error: error.message });
+  }
+});
+
+// Delete a job (for employers)
+app.delete("/api/jobs/:id", auth, requireRole(["employer"]), async (req, res) => {
+  try {
+    const jobId = req.params.id;
+    const employerId = req.user.id;
+
+    // Verify ownership
+    const [jobs] = await db.query(
+      "SELECT id FROM jobs WHERE id = ? AND employerId = ?",
+      [jobId, employerId]
+    );
+
+    if (jobs.length === 0) {
+      return res.status(404).json({ message: "Job not found or unauthorized to delete" });
+    }
+
+    await db.query("DELETE FROM jobs WHERE id = ?", [jobId]);
+    
+    res.json({ message: "Job deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting job:", error);
+    res.status(500).json({ message: "Failed to delete job", error: error.message });
   }
 });
 
 // Update application status
-app.patch('/api/applications/:id/status', auth, requireRole(['employer']), async (req, res) => {
-  try {
-    const { status } = req.body;
-    const applicationId = req.params.id;
-    
-    if (!['pending', 'accepted', 'rejected'].includes(status)) {
-      return res.status(400).json({ message: 'Invalid status' });
-    }
-    
-    // Verify the employer owns the job this application belongs to
-    const [applications] = await db.query(
-      `SELECT a.*, j.employerId 
+app.patch(
+  "/api/applications/:id/status",
+  auth,
+  requireRole(["employer"]),
+  async (req, res) => {
+    try {
+      const { status } = req.body;
+      const applicationId = req.params.id;
+
+      if (!["pending", "accepted", "rejected"].includes(status)) {
+        return res.status(400).json({ message: "Invalid status" });
+      }
+
+      // Verify the employer owns the job this application belongs to
+      const [applications] = await db.query(
+        `SELECT a.*, j.employerId 
        FROM applications a
        INNER JOIN jobs j ON a.jobId = j.id
        WHERE a.id = ?`,
-      [applicationId]
-    );
-    
-    if (applications.length === 0) {
-      return res.status(404).json({ message: 'Application not found' });
+        [applicationId],
+      );
+
+      if (applications.length === 0) {
+        return res.status(404).json({ message: "Application not found" });
+      }
+
+      if (applications[0].employerId !== req.user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      await db.query(
+        "UPDATE applications SET status = ?, statusUpdatedAt = CURRENT_TIMESTAMP WHERE id = ?",
+        [status, applicationId],
+      );
+
+      res.json({ message: "Application status updated successfully" });
+    } catch (error) {
+      console.error("Error updating application status:", error);
+      res.status(500).json({ message: "Failed to update status" });
     }
-    
-    if (applications[0].employerId !== req.user.id) {
-      return res.status(403).json({ message: 'Access denied' });
+  },
+);
+
+// Generate AI Resume
+app.post(
+  "/api/resume/generate",
+  auth,
+  requireRole(["student"]),
+  async (req, res) => {
+    try {
+      const { fullName, email, phone, objective, education, experience, skills } = req.body;
+
+      if (!fullName || !email || !phone || !education || !skills) {
+        return res.status(400).json({ message: "Please fill in all required fields marked with *." });
+      }
+
+      if (!ai) {
+        return res.status(503).json({ message: "Resume generator is currently unavailable (API Key missing)." });
+      }
+
+      const prompt = `
+        You are an expert professional resume writer. 
+        Create a clean, stunning, and professional HTML resume using the following details.
+        
+        Details:
+        - Full Name: ${fullName}
+        - Email: ${email}
+        - Phone: ${phone}
+        - Objective/Summary: ${objective || "N/A"}
+        - Education: ${education}
+        - Work Experience/Projects: ${experience || "N/A"}
+        - Key Skills: ${skills}
+
+        Instructions:
+        1. Output ONLY RAW HTML. Do not include markdown codeblocks like \`\`\`html.
+        2. Use inline CSS.
+        3. Make the design modern and ATS friendly (Clean fonts like Arial or Helvetica, standard headings).
+        4. Do not include any placeholder text. Only use the information provided. If experience or objective is N/A, omit the section.
+        5. Structure the layout with a clear header, summary, education, experience, and skills section.
+      `;
+
+      const aiResponse = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+      });
+
+      let rawHtml = aiResponse.text;
+      
+      // Clean up markdown block if the model ignores the instruction
+      if (rawHtml.startsWith("\`\`\`html")) {
+        rawHtml = rawHtml.replace(/\`\`\`html/g, "").replace(/\`\`\`/g, "");
+      }
+
+      res.json({ html: rawHtml.trim() });
+    } catch (error) {
+      console.error("Error generating resume:", error);
+      res.status(500).json({ message: "Failed to generate AI Resume.", error: error.message });
     }
-    
-    await db.query(
-      'UPDATE applications SET status = ?, statusUpdatedAt = CURRENT_TIMESTAMP WHERE id = ?',
-      [status, applicationId]
-    );
-    
-    res.json({ message: 'Application status updated successfully' });
-  } catch (error) {
-    console.error('Error updating application status:', error);
-    res.status(500).json({ message: 'Failed to update status' });
   }
-});
+);
 
 // Submit job application
-app.post('/api/applications', auth, requireRole(['student']), upload.single('resume'), async (req, res) => {
-  try {
-    const { jobId, coverLetter } = req.body;
-    const resumePath = req.file ? `/uploads/${req.file.filename}` : null;
-    
-    if (!jobId) {
-      return res.status(400).json({ message: 'Job ID is required' });
-    }
-    
-    // Check if already applied
-    const [existing] = await db.query(
-      'SELECT id FROM applications WHERE jobId = ? AND studentId = ?',
-      [jobId, req.user.id]
-    );
-    
-    if (existing.length > 0) {
-      return res.status(400).json({ message: 'You have already applied to this job' });
-    }
-    
-    const [result] = await db.query(
-      `INSERT INTO applications (jobId, studentId, resumePath, coverLetter)
-       VALUES (?, ?, ?, ?)`,
-      [jobId, req.user.id, resumePath, coverLetter || null]
-    );
-    
-    res.status(201).json({
-      message: 'Application submitted successfully',
-      applicationId: result.insertId
-    });
-  } catch (error) {
-    console.error('Error submitting application:', error);
-    res.status(500).json({ message: 'Failed to submit application', error: error.message });
-  }
-});
+app.post(
+  "/api/applications",
+  auth,
+  requireRole(["student"]),
+  upload.single("resume"),
+  async (req, res) => {
+    try {
+      const { jobId, coverLetter } = req.body;
+      const resumePath = req.file ? `/uploads/${req.file.filename}` : null;
 
-// Catch-all route for SPA
-app.get(/^(?!\/api).*/, (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+      if (!jobId) {
+        return res.status(400).json({ message: "Job ID is required" });
+      }
+
+      // Check if already applied
+      const [existing] = await db.query(
+        "SELECT id FROM applications WHERE jobId = ? AND studentId = ?",
+        [jobId, req.user.id],
+      );
+
+      if (existing.length > 0) {
+        return res
+          .status(400)
+          .json({ message: "You have already applied to this job" });
+      }
+
+      const [result] = await db.query(
+        `INSERT INTO applications (jobId, studentId, resumePath, coverLetter)
+       VALUES (?, ?, ?, ?)`,
+        [jobId, req.user.id, resumePath, coverLetter || null],
+      );
+
+      res.status(201).json({
+        message: "Application submitted successfully",
+        applicationId: result.insertId,
+      });
+    } catch (error) {
+      console.error("Error submitting application:", error);
+      res
+        .status(500)
+        .json({
+          message: "Failed to submit application",
+          error: error.message,
+        });
+    }
+  },
+);
+
+// Catch-all route for SPA (must be placed after all API routes)
+app.use((req, res, next) => {
+  if (req.method === 'GET' && !req.path.startsWith('/api/')) {
+    return res.sendFile(path.join(__dirname, "index.html"));
+  }
+  next();
 });
 
 app.use((err, req, res, next) => {
-  console.error('Error:', err.stack);
-  res.status(500).json({ message: 'Internal server error', error: err.message });
+  console.error("Error:", err.stack);
+  res
+    .status(500)
+    .json({ message: "Internal server error", error: err.message });
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`Environment: ${process.env.NODE_ENV || "development"}`);
   console.log(`Database: ${dbConfig.host}`);
 });

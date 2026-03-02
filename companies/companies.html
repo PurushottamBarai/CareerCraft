@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Top IT Companies - CareerCraft</title>
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="../footer/footer.css">
+    <link rel="stylesheet" href="companies-style.css">
+    <!-- Load custom logo mapping logic if needed or just use SVGs inline -->
+</head>
+
+<body>
+    <!-- Navbar (simplified for the page structure, identical to index.html will be injected or assumed loaded if running on SPA, since we are building separate HTMLs standardly we include the layout skeleton) -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <img class="logo" src="../ref.png" alt="carreercraft" onclick="window.location.href='../index.html'" />
+            <div id="guestNavLinks" class="nav-links">
+                <div class="anc">
+
+                    <div class="hover-menu-container">
+                        <a href="../job.html" class="nav-hover-link">Jobs</a>
+                        <div class="hover-dropdown">
+                            <div class="dropdown-col">
+                                <h4>Popular Categories</h4>
+                                <a href="../job.html">IT jobs</a>
+                                <a href="../job.html">Sales jobs</a>
+                                <a href="../job.html">Marketing jobs</a>
+                            </div>
+                            <div class="dropdown-col">
+                                <h4>Jobs by location</h4>
+                                <a href="../job.html">Jobs in Delhi</a>
+                                <a href="../job.html">Jobs in Mumbai</a>
+                                <a href="../job.html">Jobs in Bangalore</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="hover-menu-container">
+                        <a href="companies.html" class="nav-hover-link active">Companies</a>
+                        <div class="hover-dropdown">
+                            <div class="dropdown-col">
+                                <h4>Explore Companies</h4>
+                                <a href="companies.html">Top IT Companies</a>
+                                <a href="#">MNCs</a>
+                                <a href="#">Product Based</a>
+                                <a href="#">Startups</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="hover-menu-container">
+                        <a href="../index.html#services" class="nav-hover-link">Services</a>
+                        <div class="hover-dropdown">
+                            <div class="dropdown-col">
+                                <h4>Resume Tools</h4>
+                                <a href="#" onclick="window.location.href='../index.html'">AI Resume Generation</a>
+                                <a href="#">Resume Quality Score</a>
+                                <a href="#">Resume Samples</a>
+                            </div>
+                            <div class="dropdown-col">
+                                <h4>Learning & Events</h4>
+                                <a href="../index.html#quizzes">Quizzes</a>
+                                <a href="../index.html#contests">Contests</a>
+                                <a href="../index.html#hackathons">Hackathon Updates</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- We omit full auth logic here to focus on the UI as requested by the user, but keep the layout -->
+                <div class="btn">
+                    <button class="nav-btn login" onclick="window.location.href='../index.html'">Login</button>
+                    <button class="nav-btn register" onclick="window.location.href='../index.html'">Register</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="companies-container">
+
+        <div class="companies-header">
+            <h1>Top IT companies hiring now</h1>
+        </div>
+
+        <!-- Top Filters Track -->
+        <div class="filter-track">
+            <div class="filter-card">
+                <h3>MNCs</h3>
+                <p>1.2K+ Companies <span>></span></p>
+            </div>
+            <div class="filter-card">
+                <h3>Product</h3>
+                <p>800+ Companies <span>></span></p>
+            </div>
+            <div class="filter-card">
+                <h3>IT Services</h3>
+                <p>2.5K+ Companies <span>></span></p>
+            </div>
+        </div>
+
+        <!-- Main Grid Layout -->
+        <div class="layout-grid">
+
+            <!-- Left Sidebar (Filters) -->
+            <aside class="filters-sidebar">
+                <div class="filter-group">
+                    <h4>Company type</h4>
+                    <label class="filter-opt"><input type="checkbox"> Corporate</label>
+                    <label class="filter-opt"><input type="checkbox"> Foreign MNC</label>
+                    <label class="filter-opt"><input type="checkbox"> Startup</label>
+                    <label class="filter-opt"><input type="checkbox"> Indian MNC</label>
+                </div>
+                <div class="filter-group">
+                    <h4>Location</h4>
+                    <input type="text" class="search-input" placeholder="Search Location">
+                    <div style="margin-top: 1rem;">
+                        <label class="filter-opt"><input type="checkbox"> Bengaluru</label>
+                        <label class="filter-opt"><input type="checkbox"> Pune</label>
+                        <label class="filter-opt"><input type="checkbox"> Hyderabad</label>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Right side: Companies Grid -->
+            <main class="companies-grid-wrapper">
+                <div class="grid-header">
+                    <h2>Showing 6 top IT companies</h2>
+                </div>
+
+                <div class="companies-grid">
+
+                    <!-- Company Card 1 -->
+                    <div class="company-card">
+                        <div class="company-card-header">
+                            <!-- SVGs standing in for logos to keep it clean -->
+                            <div class="company-logo google-logo">G</div>
+                            <div class="company-info">
+                                <h3>Google</h3>
+                                <div class="rating-strip">
+                                    <span class="star">★</span> 4.5 <span class="reviews">| 24K reviews</span>
+                                </div>
+                            </div>
+                            <div class="arrow-right">></div>
+                        </div>
+                        <div class="company-tags">
+                            <span class="tag">Internet</span>
+                            <span class="tag">Product</span>
+                            <span class="tag">Founded: 1998</span>
+                        </div>
+                    </div>
+
+                    <!-- Company Card 2 -->
+                    <div class="company-card">
+                        <div class="company-card-header">
+                            <div class="company-logo ms-logo">M</div>
+                            <div class="company-info">
+                                <h3>Microsoft</h3>
+                                <div class="rating-strip">
+                                    <span class="star">★</span> 4.4 <span class="reviews">| 18K reviews</span>
+                                </div>
+                            </div>
+                            <div class="arrow-right">></div>
+                        </div>
+                        <div class="company-tags">
+                            <span class="tag">Software</span>
+                            <span class="tag">Product</span>
+                            <span class="tag">Founded: 1975</span>
+                        </div>
+                    </div>
+
+                    <!-- Company Card 3 -->
+                    <div class="company-card">
+                        <div class="company-card-header">
+                            <div class="company-logo tcs-logo">TCS</div>
+                            <div class="company-info">
+                                <h3>Tata Consultancy Services</h3>
+                                <div class="rating-strip">
+                                    <span class="star">★</span> 3.9 <span class="reviews">| 102K reviews</span>
+                                </div>
+                            </div>
+                            <div class="arrow-right">></div>
+                        </div>
+                        <div class="company-tags">
+                            <span class="tag">IT Services & Consulting</span>
+                            <span class="tag">Indian MNC</span>
+                        </div>
+                    </div>
+
+                    <!-- Company Card 4 -->
+                    <div class="company-card">
+                        <div class="company-card-header">
+                            <div class="company-logo infy-logo">IN</div>
+                            <div class="company-info">
+                                <h3>Infosys</h3>
+                                <div class="rating-strip">
+                                    <span class="star">★</span> 3.8 <span class="reviews">| 89K reviews</span>
+                                </div>
+                            </div>
+                            <div class="arrow-right">></div>
+                        </div>
+                        <div class="company-tags">
+                            <span class="tag">IT Services & Consulting</span>
+                            <span class="tag">Indian MNC</span>
+                            <span class="tag">Founded: 1981</span>
+                        </div>
+                    </div>
+
+                    <!-- Company Card 5 -->
+                    <div class="company-card">
+                        <div class="company-card-header">
+                            <div class="company-logo amzn-logo">a</div>
+                            <div class="company-info">
+                                <h3>Amazon</h3>
+                                <div class="rating-strip">
+                                    <span class="star">★</span> 4.2 <span class="reviews">| 45K reviews</span>
+                                </div>
+                            </div>
+                            <div class="arrow-right">></div>
+                        </div>
+                        <div class="company-tags">
+                            <span class="tag">Internet</span>
+                            <span class="tag">E-commerce</span>
+                            <span class="tag">Foreign MNC</span>
+                        </div>
+                    </div>
+
+                    <!-- Company Card 6 -->
+                    <div class="company-card">
+                        <div class="company-card-header">
+                            <div class="company-logo wipro-logo">W</div>
+                            <div class="company-info">
+                                <h3>Wipro</h3>
+                                <div class="rating-strip">
+                                    <span class="star">★</span> 3.8 <span class="reviews">| 67K reviews</span>
+                                </div>
+                            </div>
+                            <div class="arrow-right">></div>
+                        </div>
+                        <div class="company-tags">
+                            <span class="tag">IT Services & Consulting</span>
+                            <span class="tag">Indian MNC</span>
+                        </div>
+                    </div>
+
+                </div>
+            </main>
+        </div>
+    </div>
+
+</body>
+
+</html>
