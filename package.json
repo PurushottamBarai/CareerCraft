@@ -9,8 +9,7 @@
     "dev": "node server.js",
     "setup-db": "node setup-database.js",
     "build": "echo 'No build step needed for this app'"
-  }
-,
+  },
   "keywords": ["job-portal", "nodejs", "mysql", "express", "railway"],
   "author": "Purushottam",
   "license": "MIT",

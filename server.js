@@ -24,18 +24,20 @@ const dbConfig = {
     rejectUnauthorized: false
   } : false
 };
-console.log('DB Environment Check:');
-console.log('MYSQLHOST:', process.env.MYSQLHOST);
-console.log('MYSQLUSER:', process.env.MYSQLUSER);
-console.log('Final host:', dbConfig.host);
+if (process.env.NODE_ENV !== 'production') {
+  console.log('DB Environment Check:');
+  console.log('MYSQLHOST:', process.env.MYSQLHOST);
+  console.log('MYSQLUSER:', process.env.MYSQLUSER);
+  console.log('Final host:', dbConfig.host);
 
-console.log('Database config:', {
-  host: dbConfig.host,
-  user: dbConfig.user,
-  database: dbConfig.database,
-  port: dbConfig.port,
-  ssl: dbConfig.ssl ? 'enabled' : 'disabled'
-});
+  console.log('Database config:', {
+    host: dbConfig.host,
+    user: dbConfig.user,
+    database: dbConfig.database,
+    port: dbConfig.port,
+    ssl: dbConfig.ssl ? 'enabled' : 'disabled'
+  });
+}
 
 let db;
 
