@@ -367,7 +367,7 @@ app.post("/api/auth/register", async (req, res) => {
 
     const [result] = await db.query(
       `INSERT INTO users (firstName, lastName, username, email, password, role, companyName, course, graduationYear, phone, address)
-       VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, '', ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         firstName,
         finalUsername,
