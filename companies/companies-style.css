@@ -1,0 +1,313 @@
+/* companies-style.css */
+
+.companies-container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+    font-family: 'Inter', -apple-system, sans-serif;
+}
+
+.companies-header h1 {
+    font-size: 1.75rem;
+    color: #0f172a;
+    margin-bottom: 1.5rem;
+    font-weight: 700;
+}
+
+/* --- Top Filter Track (Carousel style) --- */
+.filter-track {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+}
+
+.filter-track::-webkit-scrollbar {
+    height: 4px;
+}
+
+.filter-track::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 4px;
+}
+
+.filter-card {
+    min-width: 220px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1.25rem;
+    cursor: pointer;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.filter-card h3 {
+    font-size: 1.1rem;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.filter-card p {
+    font-size: 0.9rem;
+    color: #2563eb;
+    font-weight: 500;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.filter-card span {
+    color: #cbd5e1;
+    font-size: 1.2rem;
+    transition: transform 0.2s;
+}
+
+.filter-card:hover {
+    border-color: #93c5fd;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.filter-card:hover span {
+    transform: translateX(3px);
+    color: #2563eb;
+}
+
+/* --- Main Layout Grid --- */
+.layout-grid {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 2rem;
+}
+
+/* --- Sidebar Filters --- */
+.filters-sidebar {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1.5rem;
+    height: fit-content;
+}
+
+.filter-group {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.filter-group:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.filter-group h4 {
+    font-size: 1rem;
+    color: #0f172a;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.filter-opt {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.9rem;
+    color: #475569;
+    margin-bottom: 0.75rem;
+    cursor: pointer;
+}
+
+.filter-opt input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    border-radius: 4px;
+    accent-color: #2563eb;
+}
+
+.search-input {
+    width: 100%;
+    padding: 0.6rem 1rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 999px;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.search-input:focus {
+    border-color: #2563eb;
+}
+
+/* --- Companies Grid System --- */
+.companies-grid-wrapper {
+    display: flex;
+    flex-direction: column;
+}
+
+.grid-header {
+    margin-bottom: 1rem;
+}
+
+.grid-header h2 {
+    font-size: 1rem;
+    color: #475569;
+    font-weight: 500;
+}
+
+.companies-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 1.5rem;
+}
+
+/* --- Individual Company Card --- */
+.company-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1.5rem;
+    cursor: pointer;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 140px;
+}
+
+.company-card:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+    border-color: #cbd5e1;
+}
+
+.company-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.company-logo {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.5rem;
+    color: white;
+    flex-shrink: 0;
+}
+
+/* Demo specific logo colors */
+.google-logo {
+    background: #ea4335;
+}
+
+.ms-logo {
+    background: #00a4ef;
+}
+
+.tcs-logo {
+    background: #003058;
+    font-size: 1rem;
+}
+
+.infy-logo {
+    background: #007cc3;
+    font-size: 1.2rem;
+}
+
+.amzn-logo {
+    background: #ff9900;
+}
+
+.wipro-logo {
+    background: #fff;
+    border: 1px solid #eee;
+    color: #1c1c1c;
+}
+
+.company-info {
+    flex: 1;
+}
+
+.company-info h3 {
+    font-size: 1.15rem;
+    color: #0f172a;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.rating-strip {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: #475569;
+    font-weight: 500;
+}
+
+.star {
+    color: #f59e0b;
+}
+
+.reviews {
+    color: #94a3b8;
+    font-weight: 400;
+}
+
+.arrow-right {
+    color: #cbd5e1;
+    font-size: 1.2rem;
+    transition: transform 0.2s;
+}
+
+.company-card:hover .arrow-right {
+    transform: translateX(4px);
+    color: #475569;
+}
+
+/* Tags */
+.company-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 1rem;
+}
+
+.tag {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+    padding: 0.25rem 0.6rem;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .layout-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .filters-sidebar {
+        display: none;
+        /* Hide sidebar on smaller screens for simplicity */
+    }
+}
+
+@media (max-width: 640px) {
+    .companies-grid {
+        grid-template-columns: 1fr;
+    }
+}

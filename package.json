@@ -3,19 +3,26 @@
   "version": "1.0.0",
   "description": "A full-stack Online Training and Placement Cell platform",
   "main": "server.js",
-  
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
     "setup-db": "node setup-database.js",
     "build": "echo 'No build step needed for this app'"
   },
-  "keywords": ["job-portal", "nodejs", "mysql", "express", "railway"],
+  "keywords": [
+    "job-portal",
+    "nodejs",
+    "mysql",
+    "express",
+    "railway"
+  ],
   "author": "Purushottam",
   "license": "MIT",
   "dependencies": {
+    "@google/genai": "^1.43.0",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
+    "docx": "^9.6.0",
     "dotenv": "^17.2.2",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
