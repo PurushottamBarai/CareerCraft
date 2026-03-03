@@ -26,6 +26,7 @@ body {
 }
 
 .trusted-label {
+    text-align: center;
     font-size: 0.85rem;
     color: #64748b;
     text-transform: uppercase;

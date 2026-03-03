@@ -41,7 +41,7 @@
     gap: 0.75rem;
 }
 
-.social-btn {
+.footer-social-btn {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -50,10 +50,11 @@
     background-color: #f1f5f9;
     border-radius: 4px;
     color: #64748b;
+    border: none;
     transition: all 0.2s ease;
 }
 
-.social-btn:hover {
+.footer-social-btn:hover {
     background-color: #2563eb;
     color: #ffffff;
     transform: translateY(-2px);

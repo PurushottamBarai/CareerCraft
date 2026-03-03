@@ -9,6 +9,7 @@ const nodemailer = require("nodemailer");
 const path = require("path");
 const fs = require("fs").promises;
 const { GoogleGenAI } = require("@google/genai");
+const { generateResumeDocx } = require("./resume-generator");
 
 // Initialize Gemini Client
 const ai = process.env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }) : null;
@@ -143,8 +144,8 @@ async function setupTables() {
     if (admins[0].count === 0) {
       const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD || "admin123", 12);
       await db.execute(
-        "INSERT INTO admin (username, password) VALUES (?, ?)",
-        [process.env.ADMIN_USERNAME || "admin", hashedPassword],
+        "INSERT INTO admin (username, password, email) VALUES (?, ?, ?)",
+        [process.env.ADMIN_USERNAME || "admin", hashedPassword, "admin@careercraft.com"],
       );
     }
   } catch (error) {
@@ -993,52 +994,45 @@ app.post(
   requireRole(["student"]),
   async (req, res) => {
     try {
-      const { fullName, email, phone, objective, education, experience, skills } = req.body;
+      const { fullName, email, phone, location, linkedin, objective, eduDegree, eduInstitution, eduYear, eduGrade, expRole, expCompany, expDates, expDesc, skills } = req.body;
 
-      if (!fullName || !email || !phone || !education || !skills) {
+      if (!fullName || !email || !phone || !eduDegree || !eduInstitution || !eduYear || !skills) {
         return res.status(400).json({ message: "Please fill in all required fields marked with *." });
       }
 
-      if (!ai) {
-        return res.status(503).json({ message: "Resume generator is currently unavailable (API Key missing)." });
-      }
+      // Explicitly construct the JSON object from the form to guarantee 100% exact matching
+      const resumeData = {
+        personalInfo: {
+          name: fullName,
+          email: email,
+          phone: phone,
+          location: location || "",
+          linkedin: linkedin || "",
+          github: "",
+          summary: objective || "N/A"
+        },
+        education: [
+          { degree: eduDegree, institution: eduInstitution, year: eduYear, grade: eduGrade || "" }
+        ],
+        skills: [
+          { category: "Technical Skills", items: skills }
+        ],
+        experience: expRole || expCompany ? [
+          { role: expRole || "", company: expCompany || "", dates: expDates || "", description: expDesc || "" }
+        ] : [],
+        projects: [],
+        certifications: [],
+        achievements: []
+      };
 
-      const prompt = `
-        You are an expert professional resume writer. 
-        Create a clean, stunning, and professional HTML resume using the following details.
-        
-        Details:
-        - Full Name: ${fullName}
-        - Email: ${email}
-        - Phone: ${phone}
-        - Objective/Summary: ${objective || "N/A"}
-        - Education: ${education}
-        - Work Experience/Projects: ${experience || "N/A"}
-        - Key Skills: ${skills}
-
-        Instructions:
-        1. Output ONLY RAW HTML. Do not include markdown codeblocks like \`\`\`html.
-        2. Use inline CSS.
-        3. Make the design modern and ATS friendly (Clean fonts like Arial or Helvetica, standard headings).
-        4. Do not include any placeholder text. Only use the information provided. If experience or objective is N/A, omit the section.
-        5. Structure the layout with a clear header, summary, education, experience, and skills section.
-      `;
-
-      const aiResponse = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-      });
-
-      let rawHtml = aiResponse.text;
+      const docxBuffer = await generateResumeDocx(resumeData);
       
-      // Clean up markdown block if the model ignores the instruction
-      if (rawHtml.startsWith("\`\`\`html")) {
-        rawHtml = rawHtml.replace(/\`\`\`html/g, "").replace(/\`\`\`/g, "");
-      }
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+      res.setHeader('Content-Disposition', 'attachment; filename=Resume.docx');
+      res.send(docxBuffer);
 
-      res.json({ html: rawHtml.trim() });
     } catch (error) {
-      console.error("Error generating resume:", error);
+      console.error("Error generating resume docx:", error);
       res.status(500).json({ message: "Failed to generate AI Resume.", error: error.message });
     }
   }

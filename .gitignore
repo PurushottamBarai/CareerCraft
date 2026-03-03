@@ -1,9 +1,40 @@
+# Dependencies
 node_modules/
-uploads/
+
+# Environment 
 .env
-.DS_Store
+.env.*
+
+# Logs and Debug
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# IDE & Editor
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Build & Archives
+dist/
+build/
+*.zip
+*.tar.gz
+
+# Database
 *.sql
+*.sqlite
+
+# App Specific Files
+uploads/
+test*.docx

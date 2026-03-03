@@ -5,10 +5,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CareerCraft</title>
-  <link rel="stylesheet" href="styles.css?v=2" />
+  <link rel="stylesheet" href="styles.css?v=3" />
   <link rel="icon" type="image/png" href="favicon.png" />
-  <link rel="stylesheet" href="home/home-style.css?v=2" />
-  <link rel="stylesheet" href="footer/footer.css?v=2">
+  <link rel="stylesheet" href="home/home-style.css?v=3" />
+  <link rel="stylesheet" href="footer/footer.css?v=3">
 </head>
 
 <body>
@@ -16,7 +16,7 @@
     <div class="nav-container">
       <img class="logo" src="ref.png" alt="carreercraft" onclick="window.location.href='index.html'"
         style="cursor: pointer;" />
-      <div id="guestNavLinks" class="nav-links">
+      <div class="nav-links">
         <div class="anc">
 
           <div class="hover-menu-container">
@@ -55,7 +55,7 @@
             <div class="hover-dropdown">
               <div class="dropdown-col">
                 <h4>Resume Tools</h4>
-                <a href="#" onclick="showLogin()">AI Resume Generation</a>
+                <a href="#" onclick="handleResumeGenerationNav(event)">AI Resume Generation</a>
                 <a href="#">Resume Quality Score</a>
                 <a href="#">Resume Samples</a>
               </div>
@@ -68,7 +68,8 @@
             </div>
           </div>
         </div>
-        <div class="btn">
+
+        <div id="guestNavLinks" class="btn" style="display: flex; gap: 1rem; align-items: center;">
           <button class="nav-btn login" onclick="showLogin()">Login</button>
 
           <div class="register-menu">
@@ -81,20 +82,20 @@
             </div>
           </div>
         </div>
-      </div>
 
-      <div id="userNavLinks" class="nav-links hidden">
-        <span id="welcomeMessage" class="welcome-text"></span>
-        <div class="profile-menu">
-          <button class="profile-btn">
-            <span id="profileName"></span>
-          </button>
-          <div id="profileDropdown" class="profile-dropdown hidden">
-            <a href="#" onclick="showProfile()">View Profile</a>
-            <a href="#" onclick="showEditProfile()">Edit Profile</a>
-            <a href="#" onclick="showDashboardStats()">Dashboard Stats</a>
-            <hr />
-            <a href="#" onclick="logout()">Logout</a>
+        <div id="userNavLinks" class="hidden" style="display: flex; align-items: center; gap: 1rem;">
+          <span id="welcomeMessage" class="welcome-text"></span>
+          <div class="profile-menu">
+            <button class="profile-btn">
+              <span id="profileName"></span>
+            </button>
+            <div id="profileDropdown" class="profile-dropdown hidden">
+              <a href="#" onclick="showProfile()">View Profile</a>
+              <a href="#" onclick="showEditProfile()">Edit Profile</a>
+              <a href="#" onclick="showDashboard()">Dashboard</a>
+              <hr />
+              <a href="#" onclick="logout()">Logout</a>
+            </div>
           </div>
         </div>
       </div>
@@ -362,44 +363,63 @@
             </div>
           </div>
 
+          <div class="form-row">
+            <div class="form-group">
+              <label for="resLocation">Location</label>
+              <input type="text" id="resLocation" name="location" placeholder="City, State" />
+            </div>
+            <div class="form-group">
+              <label for="resLinkedin">LinkedIn/Website URL</label>
+              <input type="text" id="resLinkedin" name="linkedin" placeholder="linkedin.com/in/username" />
+            </div>
+          </div>
+
           <div class="form-group">
-            <label for="resObjective">Professional Summary / Objective</label>
-            <textarea id="resObjective" name="objective" rows="3"
+            <label for="resObjective">Professional Summary</label>
+            <textarea id="resObjective" name="objective" rows="2"
               placeholder="Briefly describe your career goals and profile."></textarea>
           </div>
 
-          <div class="form-group">
-            <label for="resEducation">Education History *</label>
-            <textarea id="resEducation" name="education" rows="3"
-              placeholder="e.g. B.Tech in Computer Science from XYZ University (2020-2024)" required></textarea>
+          <h4 style="margin-top: 1rem; margin-bottom: 0.5rem;">Education *</h4>
+          <div class="form-row">
+            <div class="form-group"><label>Degree</label><input type="text" name="eduDegree"
+                placeholder="e.g. B.Tech Computer Science" required /></div>
+            <div class="form-group"><label>Institution</label><input type="text" name="eduInstitution"
+                placeholder="e.g. XYZ University" required /></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Year</label><input type="text" name="eduYear" placeholder="e.g. 2020 - 2024"
+                required /></div>
+            <div class="form-group"><label>CGPA / Percentage</label><input type="text" name="eduGrade"
+                placeholder="e.g. 8.5 CGPA" /></div>
           </div>
 
+          <h4 style="margin-top: 1rem; margin-bottom: 0.5rem;">Experience / Project</h4>
+          <div class="form-row">
+            <div class="form-group"><label>Role / Title</label><input type="text" name="expRole"
+                placeholder="e.g. Frontend Developer" /></div>
+            <div class="form-group"><label>Company / Context</label><input type="text" name="expCompany"
+                placeholder="e.g. TechCorp" /></div>
+            <div class="form-group"><label>Dates</label><input type="text" name="expDates"
+                placeholder="e.g. June 2023 - Present" /></div>
+          </div>
           <div class="form-group">
-            <label for="resExperience">Work Experience / Projects</label>
-            <textarea id="resExperience" name="experience" rows="4"
-              placeholder="List your relevant work experience or projects. Include titles, dates, and key achievements."></textarea>
+            <label>Key achievements</label>
+            <textarea name="expDesc" rows="2" placeholder="Describe your work and achievements..."></textarea>
           </div>
 
+          <h4 style="margin-top: 1rem; margin-bottom: 0.5rem;">Skills *</h4>
           <div class="form-group">
-            <label for="resSkills">Key Skills *</label>
-            <input type="text" id="resSkills" name="skills" placeholder="e.g. JavaScript, Python, React, SQL"
-              required />
+            <label for="resSkills">Technical Skills</label>
+            <input type="text" id="resSkills" name="skills" placeholder="e.g. JavaScript, Python, SQL" required />
           </div>
-
-          <button type="submit" class="btn btn-primary" id="generateResumeBtn">Generate Resume with AI</button>
+          <div style="display: flex; gap: 15px; align-items: center; margin-top: 1rem;">
+            <button type="submit" class="btn btn-primary" id="generateResumeBtn">Generate Resume with AI</button>
+            <a id="downloadResumeBtn" class="btn btn-primary" href="#"
+              style="background: #10b981; border-color: #0a8023; color: white; text-decoration: none; font-weight: bold; display: none;">
+              Download</a>
+          </div>
         </form>
-
-        <div id="resumeOutputContainer" class="hidden"
-          style="margin-top: 2rem; border-top: 1px solid #ddd; padding-top: 2rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-            <h3>Your Generated Resume</h3>
-            <button class="btn btn-primary" onclick="printResume()">Download / Print PDF</button>
-          </div>
-          <div id="resumeOutputArea"
-            style="background: #fff; padding: 2rem; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); color: #000; min-height: 500px;">
-            <!-- AI Output lands here -->
-          </div>
-        </div>
       </div>
     </div>
 
@@ -495,7 +515,7 @@
     </div>
   </div>
   <div id="footerContainer"></div>
-  <script src="script.js"></script>
+  <script src="script.js?v=2"></script>
 
 </body>
 

@@ -511,20 +511,17 @@ body {
 }
 
 .social-btn {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
+    /* Restored clean gap over absolute padding */
+    width: auto;
     padding: 0.9rem;
     background: white;
     border: 1.5px solid #e2e8f0;
     border-radius: 9999px;
-    /* Pill shape like reference */
     color: #475569;
     font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;
+    white-space: nowrap;
     transition: background-color 0.2s, border-color 0.2s;
 }
 
@@ -534,14 +531,14 @@ body {
 }
 
 .google-icon {
-    position: absolute;
-    left: 1.5rem;
     width: 20px;
     height: 20px;
+    flex-shrink: 0;
+    /* Ensures the SVG doesn't crush the text */
 }
 
 .login-link {
-    color: #2563eb;
+    color: #2563eb !important;
     /* Primary blue to stand out */
     font-weight: 600;
     text-decoration: none;
@@ -652,7 +649,7 @@ body {
 }
 
 .dashboard-header h2 {
-    color: #e74c3c;
+    color: #2b41bb;
     margin-bottom: 1rem;
 }
 

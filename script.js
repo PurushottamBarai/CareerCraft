@@ -46,6 +46,17 @@ function setupEventListeners() {
   document
     .getElementById("resumeGeneratorForm")
     .addEventListener("submit", handleGenerateResume);
+    
+  document
+    .getElementById("resumeGeneratorForm")
+    .addEventListener("input", function() {
+      const genBtn = document.getElementById("generateResumeBtn");
+      const downBtn = document.getElementById("downloadResumeBtn");
+      if(genBtn && downBtn) {
+          genBtn.style.display = "inline-block";
+          downBtn.style.display = "none";
+      }
+    });
 
   // Handle clicks outside dropdowns to close them
   document.addEventListener("click", function (e) {
@@ -167,9 +178,13 @@ function checkAuthStatus() {
           window.location.href = "Institute/institute.html";
           return true;
         } else if (currentUser.role === "employer") {
-          showEmployerDashboard();
+          loadEmployerJobs();
+          loadEmployerStats();
+          showHome(); // Default to home instead of dashboard
         } else {
-          showStudentDashboard();
+          loadAvailableJobs();
+          loadStudentStats();
+          showHome(); // Default to home instead of dashboard
         }
         return true;
       } else {
@@ -216,6 +231,20 @@ function updateNavigation() {
   }
 }
 // Navigation functions
+function handleResumeGenerationNav(e) {
+  if (e) e.preventDefault();
+  if (currentUser) {
+    if (currentUser.role === 'student') {
+      showStudentDashboard();
+      showResumeGenerator(null);
+    } else {
+      alert("Resume Generation is for student accounts only.");
+    }
+  } else {
+    showLogin();
+  }
+}
+
 function showLogin() {
   hideAllSections();
   document.getElementById("loginForm").classList.remove("hidden");
@@ -363,21 +392,23 @@ function showEditProfile() {
   if (dropdown) dropdown.classList.add("hidden");
 }
 
-function showDashboardStats() {
-  hideAllSections();
-  document.getElementById("statsSection").classList.remove("hidden");
-  loadDetailedStats();
+function showDashboard() {
+  if (!currentUser) return;
   // Close dropdown
   const dropdown = document.getElementById("profileDropdown");
   if (dropdown) dropdown.classList.add("hidden");
+
+  if (currentUser.role === "employer") {
+    showEmployerDashboard();
+  } else if (currentUser.role === "student") {
+    showStudentDashboard();
+  } else if (currentUser.role === "admin") {
+    window.location.href = "Institute/institute.html";
+  }
 }
 
 function hideProfileSection() {
-  if (currentUser.role === "employer") {
-    showEmployerDashboard();
-  } else {
-    showStudentDashboard();
-  }
+  showHome();
 }
 
 function hideEditProfileSection() {
@@ -385,11 +416,7 @@ function hideEditProfileSection() {
 }
 
 function hideStatsSection() {
-  if (currentUser.role === "employer") {
-    showEmployerDashboard();
-  } else {
-    showStudentDashboard();
-  }
+  showHome();
 }
 
 // Authentication handlers
@@ -420,9 +447,15 @@ async function handleLogin(e) {
         // Redirect to institute admin panel
         window.location.href = "Institute/institute.html";
       } else if (currentUser.role === "employer") {
-        showEmployerDashboard();
+        updateNavigation();
+        loadEmployerJobs();
+        loadEmployerStats();
+        showHome();
       } else {
-        showStudentDashboard();
+        updateNavigation();
+        loadAvailableJobs();
+        loadStudentStats();
+        showHome();
       }
     } else {
       alert(result.message || "Login failed");
@@ -1173,7 +1206,7 @@ async function handleGenerateResume(e) {
   
   const generateBtn = document.getElementById("generateResumeBtn");
   const originalText = generateBtn.textContent;
-  generateBtn.textContent = "Generating with AI...";
+  generateBtn.textContent = "Generating Document with AI...";
   generateBtn.disabled = true;
 
   const formData = new FormData(e.target);
@@ -1189,13 +1222,23 @@ async function handleGenerateResume(e) {
       body: JSON.stringify(data),
     });
 
-    const result = await response.json();
-
     if (response.ok) {
-        document.getElementById("resumeOutputContainer").classList.remove("hidden");
-        document.getElementById("resumeOutputArea").innerHTML = result.html;
+      // The backend now sends a raw .docx buffer
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      
+      const downloadBtn = document.getElementById("downloadResumeBtn");
+      downloadBtn.href = url;
+      downloadBtn.download = `${data.fullName.replace(/\s+/g, '_')}_Resume.docx`;
+      
+      const generateBtn = document.getElementById("generateResumeBtn");
+      generateBtn.style.display = "none";
+      downloadBtn.style.display = "inline-block";
+      
+      // We don't revoke the URL here so the user can click it as many times as they want without breaking.
     } else {
-        alert(result.message || "Failed to generate resume");
+      const result = await response.json().catch(() => ({}));
+      alert(result.message || "Failed to generate resume");
     }
   } catch (error) {
     console.error("Resume generation error:", error);
@@ -1219,7 +1262,7 @@ function printResume() {
 }
 // Load footer dynamically
 function loadFooter() {
-  fetch("footer/footer.html") // Updated path
+  fetch("footer/footer.html?v=" + new Date().getTime()) // Updated path
     .then((response) => {
       if (!response.ok) {
         throw new Error("Footer file not found");
