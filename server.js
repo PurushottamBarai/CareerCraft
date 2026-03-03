@@ -362,8 +362,8 @@ app.post("/api/auth/register", async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Generate username from email if not provided
-    const finalUsername = username || email.split("@")[0];
+    // Generate username from email if not provided, appending RNG to guarantee unique DB constraints
+    const finalUsername = username || email.split("@")[0] + "_" + Math.floor(Math.random() * 100000);
 
     const [result] = await db.query(
       `INSERT INTO users (firstName, lastName, username, email, password, role, companyName, course, graduationYear, phone, address)
