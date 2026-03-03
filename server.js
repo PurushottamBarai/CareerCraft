@@ -134,9 +134,16 @@ async function setupTables() {
           id INT PRIMARY KEY AUTO_INCREMENT,
           username VARCHAR(50) UNIQUE NOT NULL,
           password VARCHAR(255) NOT NULL,
+          email VARCHAR(255) NULL,
           createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
+
+    try {
+      await db.execute("ALTER TABLE admin ADD COLUMN email VARCHAR(255) NULL");
+    } catch(e) {
+      // Safely ignore if the column already exists
+    }
 
     const [admins] = await db.execute(
       "SELECT COUNT(*) as count FROM admin",
