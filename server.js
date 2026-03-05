@@ -277,7 +277,7 @@ const sendEmail = async (to, subject, html, userId, type) => {
 
     if (resendClient) {
       const { data, error } = await resendClient.emails.send({
-        from: '"CareerCraft Support" <info@codedeck.me>', // Verified Custom Domain
+        from: '"CareerCraft Support" <support@codedeck.me>', // Verified Custom Domain
         to: [to],
         subject: subject,
         html: html,
@@ -368,10 +368,27 @@ app.post("/api/auth/register", async (req, res) => {
     );
 
     const emailHtml = `
-      <h1>Welcome to CareerCraft!</h1>
-      <p>Dear ${firstName},</p>
-      <p>Thank you for registering as a ${role}. Your account has been created successfully.</p>
-      <p>Best regards,<br>The CareerCraft Team</p>
+      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f4f7f6; border-radius: 12px;">
+        <div style="background-color: #ffffff; padding: 40px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); text-align: center;">
+          <h1 style="color: #4f46e5; margin-bottom: 20px; font-size: 28px; font-weight: 800;">Welcome to CareerCraft! 🚀</h1>
+          <p style="color: #374151; font-size: 16px; line-height: 1.6; text-align: left;">Dear <strong>${firstName}</strong>,</p>
+          <p style="color: #374151; font-size: 16px; line-height: 1.6; text-align: left;">
+            Thank you for officially joining CareerCraft as a <strong>${role}</strong>. Your account has been prepared and activated successfully. We are absolutely thrilled to partner with you on this journey!
+          </p>
+          <div style="margin: 35px 0;">
+            <a href="https://careercraft-gebt.onrender.com" style="background-color: #4f46e5; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; display: inline-block; box-shadow: 0 4px 6px rgba(79, 70, 229, 0.25);">Launch Your Dashboard</a>
+          </div>
+          <p style="color: #6b7280; font-size: 15px; text-align: left; margin-top: 35px; line-height: 1.5;">
+            If you have any questions or require immediate setup assistance, please feel free to reply directly to this email.<br><br>
+            Best regards,<br>
+            <strong>The CareerCraft Team</strong>
+          </p>
+        </div>
+        <div style="text-align: center; margin-top: 25px; color: #9ca3af; font-size: 13px;">
+          &copy; ${new Date().getFullYear()} CareerCraft. All rights reserved.<br>
+          <a href="mailto:support@codedeck.me" style="color: #6b7280; text-decoration: underline;">support@codedeck.me</a>
+        </div>
+      </div>
     `;
 
     await sendEmail(
