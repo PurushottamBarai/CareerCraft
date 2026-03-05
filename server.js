@@ -5,7 +5,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const multer = require("multer");
 const cors = require("cors");
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 const path = require("path");
 const fs = require("fs").promises;
 const { GoogleGenAI } = require("@google/genai");
@@ -224,34 +224,16 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 },
 });
 
-// Email configuration
-let transporter = null;
-console.log("Checking email configuration...");
-console.log("EMAIL_USER:", process.env.EMAIL_USER ? "Set" : "Not set");
-console.log("EMAIL_PASS:", process.env.EMAIL_PASS ? "Set" : "Not set");
+// Email configuration via HTTP API (Resend) to bypass SMTP port blocking 
+let resendClient = null;
+console.log("Checking HTTP Email configuration...");
+console.log("RESEND_API_KEY:", process.env.RESEND_API_KEY ? "Set" : "Not set");
 
-if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-  try {
-    transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
-    transporter.verify((error, success) => {
-      if (error) {
-        console.error("Email configuration error:", error);
-      } else {
-        console.log("Email server is ready to send messages");
-      }
-    });
-  } catch (error) {
-    console.error("Error creating email transporter:", error);
-  }
+if (process.env.RESEND_API_KEY) {
+  resendClient = new Resend(process.env.RESEND_API_KEY);
+  console.log("Email engine is ready via HTTP architecture");
 } else {
-  console.warn("Email credentials not configured. Emails will not be sent.");
+  console.warn("Email API key not configured. Emails will gracefully fail soft.");
 }
 
 const auth = (req, res, next) => {
@@ -290,19 +272,22 @@ const requireRole = (roles) => (req, res, next) => {
 
 const sendEmail = async (to, subject, html, userId, type) => {
   try {
-    console.log(`Attempting to send email to: ${to}`);
+    console.log(`Attempting to send email over HTTP API to: ${to}`);
     console.log(`Subject: ${subject}`);
 
-    if (transporter) {
-      const mailOptions = {
-        from: `"CareerCraft" <${process.env.EMAIL_USER}>`,
-        to: to,
+    if (resendClient) {
+      const { data, error } = await resendClient.emails.send({
+        from: '"CareerCraft Support" <onboarding@resend.dev>', // Free tier Resend test domain
+        to: [to],
         subject: subject,
         html: html,
-      };
+      });
 
-      const info = await transporter.sendMail(mailOptions);
-      console.log("Email sent successfully:", info.messageId);
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      console.log("Email successfully transmitted:", data.id);
 
       if (db) {
         await db.query(
@@ -311,17 +296,17 @@ const sendEmail = async (to, subject, html, userId, type) => {
         );
       }
     } else {
-      console.log("Email transporter not available");
+      console.log("Email API engine missing");
 
       if (db) {
         await db.query(
           "INSERT INTO email_notifications (userId, email, subject, message, type, status) VALUES (?, ?, ?, ?, ?, ?)",
-          [userId, to, subject, "Email service not configured", type, "failed"],
+          [userId, to, subject, "Email service API not configured", type, "failed"],
         );
       }
     }
   } catch (error) {
-    console.error("Email sending error:", error);
+    console.error("High level HTTP sending error:", error);
 
     if (db) {
       await db.query(
