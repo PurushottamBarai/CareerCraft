@@ -12,7 +12,9 @@ const { GoogleGenAI } = require("@google/genai");
 const { generateResumeDocx } = require("./resume-generator");
 
 // Initialize Gemini Client
-const ai = process.env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }) : null;
+const ai = process.env.GEMINI_API_KEY
+  ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
+  : null;
 
 const app = express();
 
@@ -141,18 +143,23 @@ async function setupTables() {
 
     try {
       await db.execute("ALTER TABLE admin ADD COLUMN email VARCHAR(255) NULL");
-    } catch(e) {
+    } catch (e) {
       // Safely ignore if the column already exists
     }
 
-    const [admins] = await db.execute(
-      "SELECT COUNT(*) as count FROM admin",
-    );
+    const [admins] = await db.execute("SELECT COUNT(*) as count FROM admin");
     if (admins[0].count === 0) {
-      const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD || "admin123", 12);
+      const hashedPassword = await bcrypt.hash(
+        process.env.ADMIN_PASSWORD || "admin123",
+        12,
+      );
       await db.execute(
         "INSERT INTO admin (username, password, email) VALUES (?, ?, ?)",
-        [process.env.ADMIN_USERNAME || "admin", hashedPassword, "admin@careercraft.com"],
+        [
+          process.env.ADMIN_USERNAME || "admin",
+          hashedPassword,
+          "admin@careercraft.com",
+        ],
       );
     }
   } catch (error) {
@@ -224,7 +231,7 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 },
 });
 
-// Email configuration via HTTP API (Resend) to bypass SMTP port blocking 
+// Email configuration via HTTP API (Resend) to bypass SMTP port blocking
 let resendClient = null;
 console.log("Checking HTTP Email configuration...");
 console.log("RESEND_API_KEY:", process.env.RESEND_API_KEY ? "Set" : "Not set");
@@ -233,7 +240,9 @@ if (process.env.RESEND_API_KEY) {
   resendClient = new Resend(process.env.RESEND_API_KEY);
   console.log("Email engine is ready via HTTP architecture");
 } else {
-  console.warn("Email API key not configured. Emails will gracefully fail soft.");
+  console.warn(
+    "Email API key not configured. Emails will gracefully fail soft.",
+  );
 }
 
 const auth = (req, res, next) => {
@@ -301,7 +310,14 @@ const sendEmail = async (to, subject, html, userId, type) => {
       if (db) {
         await db.query(
           "INSERT INTO email_notifications (userId, email, subject, message, type, status) VALUES (?, ?, ?, ?, ?, ?)",
-          [userId, to, subject, "Email service API not configured", type, "failed"],
+          [
+            userId,
+            to,
+            subject,
+            "Email service API not configured",
+            type,
+            "failed",
+          ],
         );
       }
     }
@@ -348,7 +364,9 @@ app.post("/api/auth/register", async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 12);
 
     // Generate username from email if not provided, appending RNG to guarantee unique DB constraints
-    const finalUsername = username || email.split("@")[0] + "_" + Math.floor(Math.random() * 100000);
+    const finalUsername =
+      username ||
+      email.split("@")[0] + "_" + Math.floor(Math.random() * 100000);
 
     const [result] = await db.query(
       `INSERT INTO users (firstName, lastName, username, email, password, role, companyName, course, graduationYear, phone, address)
@@ -368,25 +386,54 @@ app.post("/api/auth/register", async (req, res) => {
     );
 
     const emailHtml = `
-      <div style="font-family: Arial, Helvetica, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px;">
-        <h2 style="color: #111827; margin-bottom: 24px; font-weight: 600; font-size: 22px;">Welcome to CareerCraft</h2>
-        <p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 16px;">Dear ${firstName},</p>
-        <p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
-          Thank you for joining CareerCraft. Your ${role} account is now active, and we are glad to have you on board.
-        </p>
-        <p style="color: #374151; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
-          Please log in below to launch your dashboard and start utilizing the platform.
-        </p>
-        <div style="margin: 30px 0;">
-          <a href="https://careercraft-gebt.onrender.com" style="background-color: #4f46e5; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px; display: inline-block;">Launch Your Dashboard</a>
+          <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f9fafb; padding: 40px 20px; margin: 0;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);">
+
+          <div style="padding: 30px 40px; border-bottom: 1px solid #e5e7eb;">
+            <h2 style="margin: 0; color: #000000; font-size: 24px; font-weight: 700; letter-spacing: -0.5px;">CareerCraft</h2>
+          </div>
+
+          <div style="padding: 40px;">
+            <p style="color: #000000; font-size: 16px; line-height: 1.6; margin-top: 0; margin-bottom: 20px; font-weight: 500;">
+              Dear ${firstName},
+            </p>
+
+            <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
+              Thank you for joining CareerCraft. Your <strong>${role}</strong> account is now active, and we are glad to have you on board.
+            </p>
+
+            <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
+              Please log in below to access your account and explore the platform.
+            </p>
+
+            <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+              <tr>
+                <td align="center" bgcolor="#000000" style="border-radius: 6px;">
+                  <a href="https://careercraft-gebt.onrender.com" target="_blank" style="display: inline-block; padding: 12px 32px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600; border-radius: 6px; border: 1px solid #000000;">
+                    Log In
+                  </a>
+                </td>
+              </tr>
+            </table>
+
+            <p style="color: #4b5563; font-size: 15px; line-height: 1.6; margin-bottom: 30px;">
+              Need help getting started? Just reply to this email, and our support team will assist you.
+            </p>
+
+            <p style="color: #000000; font-size: 16px; line-height: 1.6; margin-bottom: 0;">
+              Best regards,<br><br>
+              <strong>The CareerCraft Team</strong>
+            </p>
+          </div>
+
+          <div style="background-color: #fafafa; padding: 30px 40px; border-top: 1px solid #e5e7eb; text-align: center;">
+            <p style="color: #9ca3af; font-size: 13px; line-height: 1.6; margin: 0;">
+              © 2026 CareerCraft. All rights reserved.<br>
+              You are receiving this email because you recently created a ${role} account.
+            </p>
+          </div>
+
         </div>
-        <p style="color: #374151; font-size: 16px; line-height: 1.6; margin-top: 30px; margin-bottom: 24px;">
-          If you require any setup assistance, our support team is ready to help—simply reply to this email.
-        </p>
-        <p style="color: #374151; font-size: 16px; line-height: 1.6;">
-          Best regards,<br><br>
-          The CareerCraft Team
-        </p>
       </div>
     `;
 
@@ -692,7 +739,7 @@ app.get("/api/jobs", auth, async (req, res) => {
        LEFT JOIN applications a ON j.id = a.jobId AND a.studentId = ?
        WHERE j.isActive = TRUE
        ORDER BY j.createdAt DESC`,
-      [studentId]
+      [studentId],
     );
 
     // Parse skills JSON for each job
@@ -861,19 +908,44 @@ app.get("/api/auth/profile", auth, async (req, res) => {
 // Update user profile
 app.put("/api/auth/profile", auth, async (req, res) => {
   try {
-    const { firstName, lastName, phone, address, companyName, college, course, graduationYear } = req.body;
+    const {
+      firstName,
+      lastName,
+      phone,
+      address,
+      companyName,
+      college,
+      course,
+      graduationYear,
+    } = req.body;
     const userId = req.user.id;
     const role = req.user.role;
 
-    if (role === 'employer') {
+    if (role === "employer") {
       await db.query(
         "UPDATE users SET firstName = ?, lastName = ?, phone = ?, address = ?, companyName = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
-        [firstName || null, lastName || null, phone || null, address || null, companyName || null, userId]
+        [
+          firstName || null,
+          lastName || null,
+          phone || null,
+          address || null,
+          companyName || null,
+          userId,
+        ],
       );
-    } else if (role === 'student') {
+    } else if (role === "student") {
       await db.query(
         "UPDATE users SET firstName = ?, lastName = ?, phone = ?, address = ?, college = ?, course = ?, graduationYear = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
-        [firstName || null, lastName || null, phone || null, address || null, college || null, course || null, graduationYear || null, userId]
+        [
+          firstName || null,
+          lastName || null,
+          phone || null,
+          address || null,
+          college || null,
+          course || null,
+          graduationYear || null,
+          userId,
+        ],
       );
     }
 
@@ -927,29 +999,38 @@ app.post("/api/jobs", auth, requireRole(["employer"]), async (req, res) => {
 });
 
 // Delete a job (for employers)
-app.delete("/api/jobs/:id", auth, requireRole(["employer"]), async (req, res) => {
-  try {
-    const jobId = req.params.id;
-    const employerId = req.user.id;
+app.delete(
+  "/api/jobs/:id",
+  auth,
+  requireRole(["employer"]),
+  async (req, res) => {
+    try {
+      const jobId = req.params.id;
+      const employerId = req.user.id;
 
-    // Verify ownership
-    const [jobs] = await db.query(
-      "SELECT id FROM jobs WHERE id = ? AND employerId = ?",
-      [jobId, employerId]
-    );
+      // Verify ownership
+      const [jobs] = await db.query(
+        "SELECT id FROM jobs WHERE id = ? AND employerId = ?",
+        [jobId, employerId],
+      );
 
-    if (jobs.length === 0) {
-      return res.status(404).json({ message: "Job not found or unauthorized to delete" });
+      if (jobs.length === 0) {
+        return res
+          .status(404)
+          .json({ message: "Job not found or unauthorized to delete" });
+      }
+
+      await db.query("DELETE FROM jobs WHERE id = ?", [jobId]);
+
+      res.json({ message: "Job deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting job:", error);
+      res
+        .status(500)
+        .json({ message: "Failed to delete job", error: error.message });
     }
-
-    await db.query("DELETE FROM jobs WHERE id = ?", [jobId]);
-    
-    res.json({ message: "Job deleted successfully" });
-  } catch (error) {
-    console.error("Error deleting job:", error);
-    res.status(500).json({ message: "Failed to delete job", error: error.message });
-  }
-});
+  },
+);
 
 // Update application status
 app.patch(
@@ -1002,10 +1083,36 @@ app.post(
   requireRole(["student"]),
   async (req, res) => {
     try {
-      const { fullName, email, phone, location, linkedin, objective, eduDegree, eduInstitution, eduYear, eduGrade, expRole, expCompany, expDates, expDesc, skills } = req.body;
+      const {
+        fullName,
+        email,
+        phone,
+        location,
+        linkedin,
+        objective,
+        eduDegree,
+        eduInstitution,
+        eduYear,
+        eduGrade,
+        expRole,
+        expCompany,
+        expDates,
+        expDesc,
+        skills,
+      } = req.body;
 
-      if (!fullName || !email || !phone || !eduDegree || !eduInstitution || !eduYear || !skills) {
-        return res.status(400).json({ message: "Please fill in all required fields marked with *." });
+      if (
+        !fullName ||
+        !email ||
+        !phone ||
+        !eduDegree ||
+        !eduInstitution ||
+        !eduYear ||
+        !skills
+      ) {
+        return res.status(400).json({
+          message: "Please fill in all required fields marked with *.",
+        });
       }
 
       // Explicitly construct the JSON object from the form to guarantee 100% exact matching
@@ -1017,33 +1124,49 @@ app.post(
           location: location || "",
           linkedin: linkedin || "",
           github: "",
-          summary: objective || "N/A"
+          summary: objective || "N/A",
         },
         education: [
-          { degree: eduDegree, institution: eduInstitution, year: eduYear, grade: eduGrade || "" }
+          {
+            degree: eduDegree,
+            institution: eduInstitution,
+            year: eduYear,
+            grade: eduGrade || "",
+          },
         ],
-        skills: [
-          { category: "Technical Skills", items: skills }
-        ],
-        experience: expRole || expCompany ? [
-          { role: expRole || "", company: expCompany || "", dates: expDates || "", description: expDesc || "" }
-        ] : [],
+        skills: [{ category: "Technical Skills", items: skills }],
+        experience:
+          expRole || expCompany
+            ? [
+                {
+                  role: expRole || "",
+                  company: expCompany || "",
+                  dates: expDates || "",
+                  description: expDesc || "",
+                },
+              ]
+            : [],
         projects: [],
         certifications: [],
-        achievements: []
+        achievements: [],
       };
 
       const docxBuffer = await generateResumeDocx(resumeData);
-      
-      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-      res.setHeader('Content-Disposition', 'attachment; filename=Resume.docx');
-      res.send(docxBuffer);
 
+      res.setHeader(
+        "Content-Type",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      );
+      res.setHeader("Content-Disposition", "attachment; filename=Resume.docx");
+      res.send(docxBuffer);
     } catch (error) {
       console.error("Error generating resume docx:", error);
-      res.status(500).json({ message: "Failed to generate AI Resume.", error: error.message });
+      res.status(500).json({
+        message: "Failed to generate AI Resume.",
+        error: error.message,
+      });
     }
-  }
+  },
 );
 
 // Submit job application
@@ -1085,19 +1208,17 @@ app.post(
       });
     } catch (error) {
       console.error("Error submitting application:", error);
-      res
-        .status(500)
-        .json({
-          message: "Failed to submit application",
-          error: error.message,
-        });
+      res.status(500).json({
+        message: "Failed to submit application",
+        error: error.message,
+      });
     }
   },
 );
 
 // Catch-all route for SPA (must be placed after all API routes)
 app.use((req, res, next) => {
-  if (req.method === 'GET' && !req.path.startsWith('/api/')) {
+  if (req.method === "GET" && !req.path.startsWith("/api/")) {
     return res.sendFile(path.join(__dirname, "index.html"));
   }
   next();
