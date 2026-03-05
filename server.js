@@ -277,7 +277,7 @@ const sendEmail = async (to, subject, html, userId, type) => {
 
     if (resendClient) {
       const { data, error } = await resendClient.emails.send({
-        from: '"CareerCraft Support" <onboarding@resend.dev>', // Free tier Resend test domain
+        from: '"CareerCraft Support" <noreply@codedeck.me>', // Verified Custom Domain
         to: [to],
         subject: subject,
         html: html,
