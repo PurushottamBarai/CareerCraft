@@ -2,11 +2,11 @@
   "name": "careercraft",
   "version": "1.0.0",
   "description": "A full-stack Online Training and Placement Cell platform",
-  "main": "server.js",
+  "main": "backend/server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js",
-    "setup-db": "node setup-database.js",
+    "start": "node backend/server.js",
+    "dev": "node backend/server.js",
+    "setup-db": "node backend/setup-database.js",
     "build": "echo 'No build step needed for this app'"
   },
   "keywords": [
