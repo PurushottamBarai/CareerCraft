@@ -1,0 +1,228 @@
+/* Glassmorphism Theming for Resume Builder */
+.resume-wrapper {
+  padding: 40px 20px 80px;
+  background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%);
+  min-height: calc(100vh - 80px);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  font-family: 'Inter', sans-serif;
+}
+
+.glass-morph-card.resume-card {
+  width: 100%;
+  max-width: 900px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 20px;
+  padding: 50px 60px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+}
+
+.resume-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.resume-header .gradient-text {
+  font-size: 2.5rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 10px;
+  letter-spacing: -0.5px;
+}
+
+.resume-header .subtitle {
+  color: #64748b;
+  font-size: 1.1rem;
+}
+
+.resume-form .form-group {
+  margin-bottom: 20px;
+}
+
+.resume-form .form-row {
+  display: flex;
+  gap: 20px;
+}
+
+.resume-form .form-row .form-group {
+  flex: 1;
+}
+
+.resume-form .full-width {
+  width: 100%;
+}
+
+.resume-form label {
+  display: block;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+.resume-form input,
+.resume-form textarea {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.8);
+  color: #334155;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.resume-form input:focus,
+.resume-form textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  background: #fff;
+}
+
+.section-divider {
+  margin: 30px 0 20px;
+  padding-bottom: 5px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.section-divider h4 {
+  font-size: 1.25rem;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+/* Dynamic Items */
+.dynamic-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.dynamic-item {
+  position: relative;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px dashed #94a3b8;
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.2s;
+}
+
+.dynamic-item:hover {
+  border-color: #3b82f6;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.form-row.align-end {
+  align-items: flex-end;
+}
+
+.align-end .form-group {
+  margin-bottom: 0; 
+}
+
+.btn-add {
+  display: inline-block;
+  background: none;
+  border: 2px dashed #94a3b8;
+  color: #475569;
+  font-weight: 600;
+  padding: 10px 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+  margin-bottom: 15px;
+}
+
+.btn-add:hover {
+  border-color: #3b82f6;
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.btn-remove {
+  background: #fee2e2;
+  color: #ef4444;
+  border: none;
+  border-radius: 6px;
+  height: 40px;
+  width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: bold;
+}
+
+.btn-remove.absolute-top-right {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  height: 30px;
+  width: 30px;
+}
+
+.btn-remove:hover {
+  background: #ef4444;
+  color: #fff;
+}
+
+.resume-actions {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 40px;
+}
+
+.resume-actions .btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 28px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  text-decoration: none;
+}
+
+.resume-actions .btn.primary {
+  background: #2563eb;
+  color: white;
+  box-shadow: 0 4px 6px -1px rgba(37,99,235,0.4);
+}
+
+.resume-actions .btn.success {
+  background: #10b981;
+  color: white;
+  box-shadow: 0 4px 6px -1px rgba(16,185,129,0.4);
+}
+
+.resume-actions .btn.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(37,99,235,0.4);
+}
+
+.hidden {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .glass-morph-card.resume-card { padding: 30px 20px; }
+  .resume-form .form-row { flex-direction: column; gap: 0; }
+  .resume-actions { flex-direction: column; }
+  .resume-actions .btn { width: 100%; justify-content: center; }
+}

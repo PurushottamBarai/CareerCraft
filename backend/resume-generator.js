@@ -215,6 +215,19 @@ async function generateResumeDocx(resumeData) {
         });
     }
 
+    // Custom Fields
+    if (resumeData.customFields && resumeData.customFields.length > 0) {
+        resumeData.customFields.forEach((cf) => {
+            sections.push(createSectionHeading(cf.key));
+            sections.push(
+                new Paragraph({
+                    children: [new TextRun({ text: cf.value, font: "Times New Roman", size: 20 })],
+                    spacing: { before: 100, after: 200 }
+                })
+            );
+        });
+    }
+
     // Create document
     const doc = new Document({
         sections: [

@@ -1,0 +1,77 @@
+.employer-landing {
+  background-color: #f7f9fc;
+  padding: 60px 20px;
+  text-align: center;
+  border-radius: 12px;
+  margin-bottom: 40px;
+}
+.employer-landing h1 {
+  font-size: 2.5rem;
+  color: #1a1a1a;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.employer-landing p {
+  font-size: 1.1rem;
+  color: #4b5563;
+  margin-bottom: 40px;
+}
+.employer-search-bar {
+  display: flex;
+  max-width: 800px;
+  margin: 0 auto;
+  background: white;
+  padding: 8px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  border: 1px solid #e5e7eb;
+}
+.employer-search-bar input {
+  flex: 1;
+  border: none;
+  padding: 15px;
+  font-size: 1rem;
+  outline: none;
+}
+.employer-search-bar .divider {
+  width: 1px;
+  background: #e5e7eb;
+  margin: 10px 0;
+}
+.employer-search-bar button {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 0 30px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.2s;
+}
+.employer-search-bar button:hover {
+  background: #0ea5e9;
+}
+.resume-search-promo {
+  text-align: center;
+  padding: 60px 20px;
+}
+.resume-icon {
+  font-size: 3rem;
+  margin-bottom: 20px;
+  color: #6366f1;
+}
+.resume-search-promo h2 {
+  font-size: 1.5rem;
+  color: #1f2937;
+  font-weight: 400;
+  max-width: 500px;
+  margin: 0 auto;
+  line-height: 1.4;
+}
+.resume-search-promo h2 strong {
+  font-weight: 700;
+}
+#employerHomeSignInBtn {
+    margin-bottom: 30px;
+}

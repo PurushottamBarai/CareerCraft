@@ -29,9 +29,10 @@ body {
 }
 
 .nav-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 2rem;
+    max-width: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0 6rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -664,17 +665,16 @@ body {
     background: white;
     color: #666;
     cursor: pointer;
-    border-radius: 5px;
+    border-radius: 8px;
     font-weight: 500;
     transition: all 0.3s ease;
 }
 
-.dash-btn:hover,
+/* .dash-btn:hover,
 .dash-btn.active {
-    background: #007bff;
+    background: #2b3036;
     color: white;
-    border-color: #007bff;
-}
+} */
 
 .stats-cards {
     display: grid;
@@ -1055,4 +1055,173 @@ body {
 
 .btn-primary:hover {
     background: #0056b3;
+}
+
+/* Button Loader Styles */
+.btn-loader {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.submit-btn:disabled,
+.nav-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    background-color: #475569;
+}
+
+/* ========================================================= */
+/* PREMIUM PROFILE UI UPDATE (2026) */
+/* ========================================================= */
+.profile-container {
+    max-width: 600px;
+    margin: 40px auto;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    padding: 30px;
+    border: 1px solid #e2e8f0;
+}
+
+.profile-header-ui {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #f1f5f9;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+.profile-header-ui h2 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1.5rem;
+}
+
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #475569;
+    transition: all 0.2s ease;
+}
+
+.btn-icon:hover {
+    background: #2563eb;
+    color: white;
+    border-color: #2563eb;
+}
+
+.profile-details-grid {
+    display: grid;
+    gap: 15px;
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.profile-details-grid div {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.95rem;
+    color: #334155;
+}
+
+.profile-details-grid strong {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #64748b;
+    margin-bottom: 4px;
+}
+
+.profile-actions-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.danger-btn {
+    background: transparent;
+    border: 1px solid #ef4444;
+    color: #ef4444;
+    padding: 10px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.danger-btn:hover {
+    background: #ef4444;
+    color: white;
+}
+
+
+.dashboard-section {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.dashboard-nav {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 10px;
+}
+
+.dash-btn {
+    background: transparent;
+    border: none;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2e3136;
+    padding: 10px 5px;
+    cursor: pointer;
+    position: relative;
+    transition: color 0.3s;
+}
+
+/* .dash-btn:hover {
+    color: #0f172a;
+} */
+
+/* .dash-btn.active {
+    color: #2563eb;
+} */
+
+.dash-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -12px;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background-color: #244fad;
+    border-radius: 3px 3px 0 0;
 }

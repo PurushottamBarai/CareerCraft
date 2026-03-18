@@ -1,0 +1,164 @@
+<div class="resume-wrapper">
+  <div class="glass-morph-card resume-card">
+    <div class="resume-header">
+      <h2 class="gradient-text">Resume Builder</h2>
+      <p class="subtitle">Enter your professional details. Build your sections dynamically!</p>
+    </div>
+
+    <form id="resumeGeneratorForm" class="resume-form input-grid">
+      <!-- 1. Header Section -->
+      <div class="form-group full-width">
+        <label for="resFullName">Full Name *</label>
+        <input type="text" id="resFullName" name="fullName" placeholder="e.g. Purushottam Barai" required />
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="resEmail">Email *</label>
+          <input type="email" id="resEmail" name="email" placeholder="e.g. purushottam@example.com" required />
+        </div>
+        <div class="form-group">
+          <label for="resPhone">Phone *</label>
+          <input type="tel" id="resPhone" name="phone" placeholder="+91 74983756**" required />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="resLocation">Location</label>
+          <input type="text" id="resLocation" name="location" placeholder="City, State, Country" />
+        </div>
+        <div class="form-group">
+          <label for="resLinkedin">LinkedIn</label>
+          <input type="text" id="resLinkedin" name="linkedin" placeholder="linkedin.com/in/username" />
+        </div>
+      </div>
+      
+      <!-- Dynamic Header Extra Fields -->
+      <div id="customHeaderFields" class="dynamic-list"></div>
+      <button type="button" class="btn-add" onclick="addCustomHeaderField()">+ Add Custom Header Field (e.g. GitHub, Summary)</button>
+
+      <!-- 2. Education Section -->
+      <div class="section-divider">
+        <h4>Education *</h4>
+      </div>
+      <div id="educationList" class="dynamic-list"></div>
+      <button type="button" class="btn-add" onclick="addEducation()">+ Add Previous Qualification</button>
+
+      <!-- 3. Skills Section -->
+      <div class="section-divider">
+        <h4>Skills *</h4>
+      </div>
+      <div id="skillsList" class="dynamic-list"></div>
+      <button type="button" class="btn-add" onclick="addSkill()">+ Add Skill Category</button>
+
+      <!-- 4. Projects Section -->
+      <div class="section-divider">
+        <h4>Projects</h4>
+      </div>
+      <div id="projectsList" class="dynamic-list"></div>
+      <button type="button" class="btn-add" onclick="addProject()">+ Add Project</button>
+      
+      <!-- 5. Certifications Section -->
+      <div class="section-divider">
+        <h4>Certifications</h4>
+      </div>
+      <div id="certsList" class="dynamic-list"></div>
+      <button type="button" class="btn-add" onclick="addCertification()">+ Add Certification</button>
+
+      <!-- 6. Achievements Section -->
+      <div class="section-divider">
+        <h4>Achievements (Optional)</h4>
+      </div>
+      <div id="achievementsList" class="dynamic-list"></div>
+      <button type="button" class="btn-add" onclick="addAchievement()">+ Add Achievement</button>
+
+      <div class="resume-actions" style="margin-top: 50px;">
+        <button type="submit" class="btn primary hover-lift" id="generateResumeBtn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          Generate Resume
+        </button>
+        <a id="downloadResumeBtn" class="btn success hover-lift hidden" href="#">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          Download DOCX
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<template id="tmpl-customHeader">
+  <div class="dynamic-item form-row align-end">
+    <div class="form-group">
+      <label>Field Name</label>
+      <input type="text" class="custom-header-key" placeholder="e.g. GitHub URL, Portfolio" required />
+    </div>
+    <div class="form-group">
+      <label>Value</label>
+      <input type="text" class="custom-header-value" placeholder="e.g. github.com/username" required />
+    </div>
+    <button type="button" class="btn-remove" onclick="this.parentElement.remove()" title="Remove">✕</button>
+  </div>
+</template>
+
+<template id="tmpl-education">
+  <div class="dynamic-item education-item">
+    <button type="button" class="btn-remove absolute-top-right" onclick="removeDynamicItem(this)" title="Remove">✕</button>
+    <div class="form-row">
+      <div class="form-group"><label>Degree / Diploma *</label><input type="text" class="edu-degree" placeholder="e.g. Bachelor of Computer Applications (BCA)" required /></div>
+      <div class="form-group"><label>Institution *</label><input type="text" class="edu-institution" placeholder="e.g. Thakur College of Engineering" required /></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Year</label><input type="text" class="edu-year" placeholder="e.g. 2026 - present" /></div>
+      <div class="form-group"><label>CGPA / Percentage</label><input type="text" class="edu-grade" placeholder="e.g. CGPA: 8.64" /></div>
+    </div>
+  </div>
+</template>
+
+<template id="tmpl-skill">
+  <div class="dynamic-item form-row align-end skill-item">
+    <div class="form-group">
+      <label>Category</label>
+      <input type="text" class="skill-category" placeholder="e.g. Languages" />
+    </div>
+    <div class="form-group" style="flex: 2;">
+      <label>Description *</label>
+      <input type="text" class="skill-items" placeholder="e.g. Java, JavaScript, familiar with C and C++" required />
+    </div>
+    <button type="button" class="btn-remove" onclick="removeDynamicItem(this)" title="Remove">✕</button>
+  </div>
+</template>
+
+<template id="tmpl-project">
+  <div class="dynamic-item project-item">
+    <button type="button" class="btn-remove absolute-top-right" onclick="removeDynamicItem(this)" title="Remove">✕</button>
+    <div class="form-row">
+      <div class="form-group"><label>Project Title *</label><input type="text" class="proj-title" placeholder="e.g. CareerCraft" required /></div>
+      <div class="form-group"><label>URL</label><input type="text" class="proj-url" placeholder="e.g. github.com/project" /></div>
+    </div>
+    <div class="form-group full-width">
+      <label>Description *</label>
+      <textarea class="proj-desc" rows="2" placeholder="Describe your project, technologies used, etc." required></textarea>
+    </div>
+  </div>
+</template>
+
+<template id="tmpl-cert">
+  <div class="dynamic-item form-row align-end cert-item">
+    <div class="form-group" style="flex: 1;">
+      <label>Certification Name</label>
+      <input type="text" class="cert-text" placeholder="e.g. Write about your certifications" required />
+    </div>
+    <button type="button" class="btn-remove" onclick="removeDynamicItem(this)" title="Remove">✕</button>
+  </div>
+</template>
+
+<template id="tmpl-achievement">
+  <div class="dynamic-item form-row align-end achievement-item">
+    <div class="form-group" style="flex: 1;">
+      <label>Achievement Description</label>
+      <input type="text" class="achieve-text" placeholder="e.g. Write about your achievements" required />
+    </div>
+    <button type="button" class="btn-remove" onclick="removeDynamicItem(this)" title="Remove">✕</button>
+  </div>
+</template>

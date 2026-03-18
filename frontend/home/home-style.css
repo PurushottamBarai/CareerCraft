@@ -305,10 +305,10 @@ body {
 }
 
 .banner {
+    display: block;
     max-width: 1400px;
-    width: calc(100% - 4rem);
-    height: 300px;
-    background: url('banner.png') no-repeat center center/cover;
+    width: 75%;
+    height: auto;
     margin: 3rem auto 5rem;
     border-radius: 16px;
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);

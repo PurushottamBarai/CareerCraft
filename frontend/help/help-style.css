@@ -1,0 +1,131 @@
+
+.help-center-wrapper {
+  background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+  padding: 80px 20px;
+  min-height: 80vh;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.help-header-section {
+  text-align: center;
+  max-width: 800px;
+  margin: 0 auto 60px auto;
+}
+
+.help-pre-title {
+  color: #3b82f6;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-size: 0.85rem;
+  margin-bottom: 15px;
+  display: inline-block;
+  background: rgba(59, 130, 246, 0.1);
+  padding: 6px 14px;
+  border-radius: 20px;
+}
+
+.help-title {
+  font-size: 3rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 20px;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+}
+
+.help-subtitle {
+  font-size: 1.2rem;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.help-cards-layout {
+  display: flex;
+  gap: 30px;
+  max-width: 1000px;
+  margin: 0 auto;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.premium-help-card {
+  flex: 1;
+  min-width: 320px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 20px;
+  padding: 40px;
+  text-align: left;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.04);
+  /* transition: all 0.4s cubic-bezier(0.6, 0, 0.4, 1);       */
+  display: flex;
+  flex-direction: column;
+}
+
+
+.premium-help-card:nth-child(2)::before {
+  background: linear-gradient(90deg, #10b981, #34d399);
+}
+
+.premium-help-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.08);
+}
+
+
+
+.card-icon-container {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 25px;
+}
+
+.student-icon {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(96, 165, 250, 0.2));
+  color: #3b82f6;
+}
+
+.employer-icon {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(52, 211, 153, 0.2));
+  color: #10b981;
+}
+
+.premium-help-card h3 {
+  font-size: 1.8rem;
+  color: #1e293b;
+  margin-bottom: 15px;
+  font-weight: 700;
+}
+
+.premium-help-card p {
+  color: #475569;
+  font-size: 1.05rem;
+  line-height: 1.7;
+  flex-grow: 1; /* pushes link to bottom */
+  margin-bottom: 30px;
+}
+
+.help-action-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  text-decoration: none;
+  margin-top: auto;
+  transition: all 0.2s;
+}
+
+.student-link { color: #3b82f6; }
+.student-link:hover { color: #2563eb; gap: 12px; }
+
+.employer-link { color: #10b981; }
+.employer-link:hover { color: #059669; gap: 12px; }

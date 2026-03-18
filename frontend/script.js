@@ -44,19 +44,8 @@ function setupEventListeners() {
     .getElementById("applyJobForm")
     .addEventListener("submit", handleApplyJob);
   document
-    .getElementById("resumeGeneratorForm")
-    .addEventListener("submit", handleGenerateResume);
-    
-  document
-    .getElementById("resumeGeneratorForm")
-    .addEventListener("input", function() {
-      const genBtn = document.getElementById("generateResumeBtn");
-      const downBtn = document.getElementById("downloadResumeBtn");
-      if(genBtn && downBtn) {
-          genBtn.style.display = "inline-block";
-          downBtn.style.display = "none";
-      }
-    });
+    .getElementById("editProfileForm")
+    .addEventListener("submit", handleEditProfile);
 
   // Handle clicks outside dropdowns to close them
   document.addEventListener("click", function (e) {
@@ -104,6 +93,14 @@ async function loadHomeContent() {
 
     // Insert into homeSection
     document.getElementById("homeSection").innerHTML = bodyContent;
+
+    // Hide Employer button if user is already logged in
+    if (currentUser) {
+      const empBtn = document.getElementById("employerHeroBtn");
+      if (empBtn) {
+        empBtn.style.display = 'none';
+      }
+    }
   } catch (error) {
     console.error("Error loading home content:", error);
   }
@@ -121,6 +118,15 @@ function togglePasswordVisibility(inputId) {
   }
 }
 
+function handleLogoClick(event) {
+  if (event) event.preventDefault();
+  if (currentUser && currentUser.role === "employer") {
+    showEmployerHome();
+  } else {
+    showHome();
+  }
+}
+
 function showHome() {
   hideAllSections();
   const homeSection = document.getElementById("homeSection");
@@ -131,6 +137,112 @@ function showHome() {
 
   loadHomeContent();
 }
+
+async function loadEmployerHomeContent() {
+  try {
+    const response = await fetch("home/employer-home.html?t=" + new Date().getTime());
+    const html = await response.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+    const bodyContent = doc.body.innerHTML;
+    document.getElementById("employerHomeSection").innerHTML = bodyContent;
+    
+    // Auto-hide the "Sign in" button if user is already logged in as employer
+    if (currentUser) {
+      const employerSignIn = document.getElementById("employerHomeSignInBtn");
+      if (employerSignIn) employerSignIn.style.display = 'none';
+    }
+  } catch (error) {
+    console.error("Error loading employer home content:", error);
+  }
+}
+
+function showEmployerHome() {
+  hideAllSections();
+  const section = document.getElementById("employerHomeSection");
+  const container = document.querySelector(".container");
+  
+  if (section) section.classList.remove("hidden");
+  if (container) container.classList.add("home-active");
+  
+  loadEmployerHomeContent();
+}
+
+async function loadHelpContent() {
+  try {
+    const response = await fetch("help/help.html?t=" + new Date().getTime());
+    const html = await response.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+    const bodyContent = doc.body.innerHTML;
+    document.getElementById("helpSection").innerHTML = bodyContent;
+  } catch (error) {
+    console.error("Error loading help content:", error);
+  }
+}
+
+function showHelpCenter() {
+  hideAllSections();
+  const section = document.getElementById("helpSection");
+  const container = document.querySelector(".container");
+  
+  if (section) section.classList.remove("hidden");
+  if (container) container.classList.add("home-active");
+  
+  loadHelpContent();
+}
+
+async function loadQuizContent() {
+  try {
+    const response = await fetch("quiz/quiz.html?t=" + new Date().getTime());
+    const html = await response.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+    const bodyContent = doc.body.innerHTML;
+    document.getElementById("quizSection").innerHTML = bodyContent;
+  } catch (error) {
+    console.error("Error loading quiz content:", error);
+  }
+}
+
+function showQuiz() {
+  hideAllSections();
+  const section = document.getElementById("quizSection");
+  const container = document.querySelector(".container");
+  
+  if (section) section.classList.remove("hidden");
+  if (container) container.classList.add("home-active");
+  
+  // Load UI dynamically and then initialize its internal script App
+  loadQuizContent().then(() => {
+    if (window.quizApp) window.quizApp.init();
+  });
+}
+
+async function loadAboutContent() {
+  try {
+    const response = await fetch("about/about.html?t=" + new Date().getTime());
+    const html = await response.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+    const bodyContent = doc.body.innerHTML;
+    document.getElementById("aboutSection").innerHTML = bodyContent;
+  } catch (error) {
+    console.error("Error loading about content:", error);
+  }
+}
+
+function showAbout() {
+  hideAllSections();
+  const section = document.getElementById("aboutSection");
+  const container = document.querySelector(".container");
+  
+  if (section) section.classList.remove("hidden");
+  if (container) container.classList.add("home-active");
+  
+  loadAboutContent();
+}
+
 async function handleApplyJob(e) {
   e.preventDefault();
   const formData = new FormData(e.target);
@@ -177,14 +289,8 @@ function checkAuthStatus() {
         if (currentUser.role === "admin") {
           window.location.href = "Institute/institute.html";
           return true;
-        } else if (currentUser.role === "employer") {
-          loadEmployerJobs();
-          loadEmployerStats();
-          showHome(); // Default to home instead of dashboard
         } else {
-          loadAvailableJobs();
-          loadStudentStats();
-          showHome(); // Default to home instead of dashboard
+          showDashboard(); 
         }
         return true;
       } else {
@@ -231,18 +337,36 @@ function updateNavigation() {
   }
 }
 // Navigation functions
+// Resume Routers
+async function loadResumeContent() {
+  try {
+    const response = await fetch("resume/resume.html?t=" + new Date().getTime());
+    const html = await response.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+    const bodyContent = doc.body.innerHTML;
+    document.getElementById("resumeSection").innerHTML = bodyContent;
+  } catch (error) {
+    console.error("Error loading resume content:", error);
+  }
+}
+
+function showResume() {
+  hideAllSections();
+  const section = document.getElementById("resumeSection");
+  const container = document.querySelector(".container");
+  
+  if (section) section.classList.remove("hidden");
+  if (container) container.classList.add("home-active");
+  
+  loadResumeContent().then(() => {
+    if (window.resumeFeatureApp) window.resumeFeatureApp.init();
+  });
+}
+
 function handleResumeGenerationNav(e) {
   if (e) e.preventDefault();
-  if (currentUser) {
-    if (currentUser.role === 'student') {
-      showStudentDashboard();
-      showResumeGenerator(null);
-    } else {
-      alert("Resume Generation is for student accounts only.");
-    }
-  } else {
-    showLogin();
-  }
+  showResume();
 }
 
 function showLogin() {
@@ -295,6 +419,10 @@ function hideAllSections() {
   if (container) {
     container.classList.remove("home-active");
   }
+
+  // Hide quiz specific overlays if any
+  const quizModal = document.getElementById("quiz-limit-modal");
+  if (quizModal) quizModal.classList.add("hidden");
 }
 
 function showPostJob(event) {
@@ -326,17 +454,10 @@ function showMyApplications(event) {
   setActiveTab(event);
   document.getElementById("browseJobsSection").classList.add("hidden");
   document.getElementById("myApplicationsSection").classList.remove("hidden");
-  document.getElementById("resumeGeneratorSection").classList.add("hidden");
   loadMyApplications();
 }
 
-function showResumeGenerator(event) {
-  console.log("Showing resume generator section");
-  setActiveTab(event);
-  document.getElementById("browseJobsSection").classList.add("hidden");
-  document.getElementById("myApplicationsSection").classList.add("hidden");
-  document.getElementById("resumeGeneratorSection").classList.remove("hidden");
-}
+
 
 function setActiveTab(event) {
   console.log("Setting active tab, event:", event);
@@ -377,19 +498,30 @@ function profileDropdown(event) {
 function showProfile() {
   hideAllSections();
   document.getElementById("profileSection").classList.remove("hidden");
+  
+  // Ensure we are in View Mode initially
+  document.getElementById("profileViewMode").classList.remove("hidden");
+  document.getElementById("profileEditMode").classList.add("hidden");
+  
   loadProfile();
+  
   // Close dropdown
   const dropdown = document.getElementById("profileDropdown");
   if (dropdown) dropdown.classList.add("hidden");
 }
 
-function showEditProfile() {
-  hideAllSections();
-  document.getElementById("editProfileSection").classList.remove("hidden");
-  loadEditProfile();
-  // Close dropdown
-  const dropdown = document.getElementById("profileDropdown");
-  if (dropdown) dropdown.classList.add("hidden");
+function toggleProfileEditMode() {
+  const viewMode = document.getElementById("profileViewMode");
+  const editMode = document.getElementById("profileEditMode");
+  
+  if (viewMode.classList.contains("hidden")) {
+    viewMode.classList.remove("hidden");
+    editMode.classList.add("hidden");
+  } else {
+    viewMode.classList.add("hidden");
+    editMode.classList.remove("hidden");
+    loadEditProfile(); // Load current data into the fields
+  }
 }
 
 function showDashboard() {
@@ -408,11 +540,7 @@ function showDashboard() {
 }
 
 function hideProfileSection() {
-  showHome();
-}
-
-function hideEditProfileSection() {
-  showProfile();
+  showDashboard();
 }
 
 function hideStatsSection() {
@@ -420,9 +548,25 @@ function hideStatsSection() {
 }
 
 // Authentication handlers
+function setButtonLoading(button, isLoading, originalText = 'Submit', loadingText = 'Processing...') {
+  if (!button) return;
+  if (isLoading) {
+    button.disabled = true;
+    button.innerHTML = `<span class="btn-loader"></span> ${loadingText}`;
+    button.dataset.originalText = originalText;
+  } else {
+    button.disabled = false;
+    button.innerHTML = button.dataset.originalText || originalText;
+  }
+}
+
 async function handleLogin(e) {
   e.preventDefault();
-  const formData = new FormData(e.target);
+  const form = e.target;
+  const submitBtn = form.querySelector('button[type="submit"]');
+  setButtonLoading(submitBtn, true, 'Login', 'Logging in...');
+
+  const formData = new FormData(form);
   const loginData = {
     email: formData.get("email"),
     password: formData.get("password"),
@@ -446,16 +590,8 @@ async function handleLogin(e) {
       if (currentUser.role === "admin") {
         // Redirect to institute admin panel
         window.location.href = "Institute/institute.html";
-      } else if (currentUser.role === "employer") {
-        updateNavigation();
-        loadEmployerJobs();
-        loadEmployerStats();
-        showHome();
       } else {
-        updateNavigation();
-        loadAvailableJobs();
-        loadStudentStats();
-        showHome();
+        showDashboard();
       }
     } else {
       alert(result.message || "Login failed");
@@ -463,15 +599,22 @@ async function handleLogin(e) {
   } catch (error) {
     console.error("Login error:", error);
     alert("Login failed. Please try again.");
+  } finally {
+    setButtonLoading(submitBtn, false, 'Login');
   }
 }
 
 async function handleEmployerRegister(e) {
   e.preventDefault();
-  const formData = new FormData(e.target);
+  const form = e.target;
+  const submitBtn = form.querySelector('button[type="submit"]');
+  setButtonLoading(submitBtn, true, 'Register', 'Registering...');
+
+  const formData = new FormData(form);
   
   if (formData.get('password') !== formData.get('confirmPassword')) {
     alert('Passwords do not match');
+    setButtonLoading(submitBtn, false, 'Register');
     return;
   }
   
@@ -503,15 +646,22 @@ async function handleEmployerRegister(e) {
   } catch (error) {
     console.error('Registration error:', error);
     alert('Registration failed. Please try again.');
+  } finally {
+    setButtonLoading(submitBtn, false, 'Register');
   }
 }
 
 async function handleStudentRegister(e) {
   e.preventDefault();
-  const formData = new FormData(e.target);
+  const form = e.target;
+  const submitBtn = form.querySelector('button[type="submit"]');
+  setButtonLoading(submitBtn, true, 'Register', 'Registering...');
+
+  const formData = new FormData(form);
   
   if (formData.get('password') !== formData.get('confirmPassword')) {
     alert('Passwords do not match');
+    setButtonLoading(submitBtn, false, 'Register');
     return;
   }
   
@@ -547,6 +697,8 @@ async function handleStudentRegister(e) {
   } catch (error) {
     console.error('Registration error:', error);
     alert('Registration failed. Please try again.');
+  } finally {
+    setButtonLoading(submitBtn, false, 'Register');
   }
 }
 
@@ -1068,6 +1220,72 @@ function loadEditProfile() {
   }
 }
 
+async function handleEditProfile(e) {
+  e.preventDefault();
+  const form = e.target;
+  const submitBtn = form.querySelector('button[type="submit"]');
+  setButtonLoading(submitBtn, true, 'Save Changes', 'Saving...');
+
+  const formData = new FormData(form);
+  const updatedData = Object.fromEntries(formData.entries());
+
+  try {
+    const response = await fetch(`${API_BASE}/auth/profile`, {
+      method: 'PUT',
+      headers: { 
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify(updatedData)
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      alert('Profile updated successfully!');
+      
+      // Update local storage
+      Object.assign(currentUser, updatedData);
+      localStorage.setItem('user', JSON.stringify(currentUser));
+      updateNavigation();
+      
+      toggleProfileEditMode(); // Go back to view mode
+      loadProfile(); // Refresh details UI
+    } else {
+      alert(result.message || 'Failed to update profile');
+    }
+  } catch (error) {
+    console.error('Profile update error:', error);
+    alert('Failed to update profile. Please try again.');
+  } finally {
+    setButtonLoading(submitBtn, false, 'Save Changes');
+  }
+}
+
+async function deleteProfile() {
+  if (!confirm("Are you sure you want to permanently delete your account? This action cannot be undone.")) {
+    return;
+  }
+  
+  try {
+    const response = await fetch(`${API_BASE}/auth/profile`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    });
+    
+    if (response.ok) {
+      alert("Your account has been permanently deleted.");
+      logout();
+    } else {
+      const result = await response.json();
+      alert(result.message || "Failed to delete account");
+    }
+  } catch (err) {
+    console.error("Delete profile error:", err);
+    alert("Connection error. Could not delete account.");
+  }
+}
+
 function loadDetailedStats() {
   const statsContainer = document.getElementById("detailedStats");
 
@@ -1201,65 +1419,7 @@ window.onclick = function (event) {
   }
 };
 
-async function handleGenerateResume(e) {
-  e.preventDefault();
-  
-  const generateBtn = document.getElementById("generateResumeBtn");
-  const originalText = generateBtn.textContent;
-  generateBtn.textContent = "Generating Document with AI...";
-  generateBtn.disabled = true;
 
-  const formData = new FormData(e.target);
-  const data = Object.fromEntries(formData.entries());
-
-  try {
-    const response = await fetch(`${API_BASE}/resume/generate`, {
-      method: "POST",
-      headers: { 
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${localStorage.getItem("token")}`
-      },
-      body: JSON.stringify(data),
-    });
-
-    if (response.ok) {
-      // The backend now sends a raw .docx buffer
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      
-      const downloadBtn = document.getElementById("downloadResumeBtn");
-      downloadBtn.href = url;
-      downloadBtn.download = `${data.fullName.replace(/\s+/g, '_')}_Resume.docx`;
-      
-      const generateBtn = document.getElementById("generateResumeBtn");
-      generateBtn.style.display = "none";
-      downloadBtn.style.display = "inline-block";
-      
-      // We don't revoke the URL here so the user can click it as many times as they want without breaking.
-    } else {
-      const result = await response.json().catch(() => ({}));
-      alert(result.message || "Failed to generate resume");
-    }
-  } catch (error) {
-    console.error("Resume generation error:", error);
-    alert("Connection failed. Please try again later.");
-  } finally {
-    generateBtn.textContent = originalText;
-    generateBtn.disabled = false;
-  }
-}
-
-function printResume() {
-    const printContent = document.getElementById("resumeOutputArea").innerHTML;
-    const originalContent = document.body.innerHTML;
-
-    document.body.innerHTML = printContent;
-    window.print();
-    document.body.innerHTML = originalContent;
-    
-    // Quick re-init for SPA functionality
-    location.reload();
-}
 // Load footer dynamically
 function loadFooter() {
   fetch("footer/footer.html?v=" + new Date().getTime()) // Updated path

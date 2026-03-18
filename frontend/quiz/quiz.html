@@ -1,0 +1,123 @@
+<link rel="stylesheet" href="quiz/quiz.css" />
+
+<div id="quiz-wrapper" class="quiz-wrapper">
+  
+  <!-- Setup View -->
+  <div id="quiz-setup-view" class="quiz-view">
+    <div class="setup-header">
+      <h2>CareerCraft Technical Assessments</h2>
+      <p>Test your knowledge with our dynamic AI-generated quizzes.</p>
+    </div>
+
+    <div class="setup-form">
+      <div class="form-group row">
+        <label for="quiz-subject">Subject</label>
+        <select id="quiz-subject" onchange="window.quizApp.updateTopics()">
+          <option value="" disabled selected>Select a subject...</option>
+          <option value="Java">Java</option>
+          <option value="C Language">C Language</option>
+          <option value="C++">C++</option>
+          <option value="JavaScript">JavaScript</option>
+          <option value="Spring Boot">Spring Boot</option>
+          <option value="Hibernate">Hibernate</option>
+          <option value="Data Structures and Algorithms">Data Structures and Algorithms</option>
+          <option value="Computers">Computers</option>
+          <option value="Operating Systems">Operating Systems</option>
+          <option value="DBMS">DBMS</option>
+          <option value="Computer Networks">Computer Networks</option>
+          <option value="Software Engineering">Software Engineering</option>
+          <option value="English Language">English Language</option>
+        </select>
+      </div>
+
+      <div class="form-group row" id="topic-container" style="display: none;">
+        <label for="quiz-topic">Target Topic</label>
+        <select id="quiz-topic" onchange="window.quizApp.showMetadata()">
+          <option value="" disabled selected>Select a topic...</option>
+        </select>
+      </div>
+
+      <div id="quiz-metadata" class="quiz-metadata" style="display: none;">
+        <div class="meta-item">
+          <span class="meta-label">Questions:</span>
+          <span class="meta-value">10 Multiple Choice</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Time Limit:</span>
+          <span class="meta-value">15:00 Minutes</span>
+        </div>
+        
+        <button id="start-test-btn" class="start-btn" onclick="window.quizApp.startQuiz()">Start Test</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading View -->
+  <div id="quiz-loading-view" class="quiz-view" style="display: none;">
+    <div class="loader-container">
+      <div class="spinner"></div>
+      <p>Wait while loading the test...</p>
+    </div>
+  </div>
+
+  <!-- Execution View (Exam Style) -->
+  <div id="quiz-execution-view" class="quiz-view exam-theme" style="display: none;">
+    <div class="exam-header">
+      <div class="exam-title" id="execution-exam-title">CareerCraft Dynamic Evaluation</div>
+      <div class="exam-timer-bar">
+        <span>Time remaining <strong id="exam-timer">15:00</strong></span>
+        <span class="auto-submit-msg">Test will be auto submitted for grading at 00:00:00</span>
+      </div>
+    </div>
+
+    <div class="exam-body">
+      <div class="question-counter">
+        <span id="q-counter-text">1. </span>
+        <span id="question-text">Loading question...</span>
+      </div>
+
+      <div class="options-container" id="exam-options">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <div class="exam-footer">
+      <button class="exam-btn" id="btn-prev" onclick="window.quizApp.prevQuestion()">Previous</button>
+      <span class="page-indicator" id="page-indicator">1 of 10 Pages</span>
+      <button class="exam-btn primary" id="btn-next" onclick="window.quizApp.nextQuestion()">Next</button>
+      <button class="exam-btn" id="btn-summary" onclick="window.quizApp.submitQuiz()">Summary / Submit</button>
+    </div>
+  </div>
+
+  <!-- Result View -->
+  <div id="quiz-result-view" class="quiz-view" style="display: none;">
+    <div class="result-header">
+      <h2>Evaluation Results</h2>
+      <div class="score-card">
+        <div class="score-circle">
+          <span id="final-score">0</span>
+          <small>out of 10</small>
+        </div>
+        <div class="score-label">Correct Answers</div>
+      </div>
+    </div>
+    
+    <div class="explanations-list" id="explanations-list">
+      <!-- Explanations dynamically injected -->
+    </div>
+    
+    <div class="result-actions">
+      <button class="btn secondary" onclick="window.quizApp.resetQuiz()">Take Another Quiz</button>
+      <button class="btn primary" onclick="showHome()">Return Home</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Login Limit Modal -->
+<div id="quiz-limit-modal" class="modal-overlay hidden">
+  <div class="modal-content limit-box">
+    <p id="limit-message" style="font-size: 1.4rem; font-weight: 600; color: #1e293b; margin-bottom: 25px;">Please log in to continue.</p>
+    <button class="btn primary" onclick="window.quizApp.closeModalAndLogin()" id="limit-login-btn" style="padding: 12px 24px; font-size: 1.1rem; width: 100%;">Log In</button>
+  </div>
+</div>
