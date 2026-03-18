@@ -148,19 +148,24 @@ async function setupTables() {
     }
 
     const [admins] = await db.execute("SELECT COUNT(*) as count FROM admin");
+    const adminUsername = process.env.ADMIN_USERNAME || "admin";
+    const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
+    const hashedPassword = await bcrypt.hash(adminPassword, 12);
+
     if (admins[0].count === 0) {
-      const hashedPassword = await bcrypt.hash(
-        process.env.ADMIN_PASSWORD || "admin123",
-        12,
-      );
+      // First boot: Create
       await db.execute(
         "INSERT INTO admin (username, password, email) VALUES (?, ?, ?)",
-        [
-          process.env.ADMIN_USERNAME || "admin",
-          hashedPassword,
-          "admin@careercraft.com",
-        ],
+        [adminUsername, hashedPassword, "admin@careercraft.com"],
       );
+    } else {
+      // Subsequent boot: Securely sync/override with environment variables (if the ENV is explicitly providing it to protect against stale hardcoded test accounts)
+      if (process.env.ADMIN_USERNAME && process.env.ADMIN_PASSWORD) {
+         await db.execute(
+          "UPDATE admin SET username = ?, password = ? ORDER BY id ASC LIMIT 1",
+          [adminUsername, hashedPassword]
+         );
+      }
     }
   } catch (error) {
     console.error("Admin table setup error:", error);
@@ -194,8 +199,8 @@ app.use(
 );
 
 app.use(express.json());
-app.use("/uploads", express.static("uploads"));
-app.use(express.static(__dirname));
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+app.use(express.static(path.join(__dirname, "../frontend")));
 
 const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
@@ -1218,8 +1223,8 @@ app.post(
 
 // Catch-all route for SPA (must be placed after all API routes)
 app.use((req, res, next) => {
-  if (req.method === "GET" && !req.path.startsWith("/api/")) {
-    return res.sendFile(path.join(__dirname, "index.html"));
+  if (req.method === "GET" && !req.path.startsWith("/api/") && !req.path.startsWith("/uploads/")) {
+    return res.sendFile(path.join(__dirname, "../frontend/index.html"));
   }
   next();
 });

@@ -2,7 +2,7 @@
 
 A comprehensive web-based platform bridging the gap between students and top employers. 
 
-**Live Demo:** [CareerCraft on Railway](https://careercraft-production-32b2.up.railway.app/)
+**Live Demo:** [CareerCraft on Render](https://careercraft-gebt.onrender.com/)
 
 ---
 
@@ -16,7 +16,7 @@ A comprehensive web-based platform bridging the gap between students and top emp
 
 ## Tech Stack
 
-- **Frontend:** Vanilla HTML5, CSS3, JavaScript (Lightweight & zero dependencies)
+- **Frontend:** Vanilla HTML5, CSS3, JavaScript
 - **Backend Architecture:** Node.js with Express.js REST API
 - **Database:** MySQL relational mapping
 - **Authentication:** Custom JWT-based security alongside standard login structures
