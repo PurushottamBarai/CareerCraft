@@ -11,7 +11,8 @@ const TOPIC_MAP = {
   "DBMS": ["SQL Queries", "Normalization", "Transactions (ACID)", "Indexing", "Relational Algebra"],
   "Computer Networks": ["OSI Model", "TCP/IP Protocol Suite", "Routing Algorithms", "Network Security", "Application Layer Protocols"],
   "Software Engineering": ["SDLC", "Agile Methodologies", "Testing", "Requirements Engineering", "Software Architecture"],
-  "English Language": ["Grammar", "Vocabulary", "Reading Comprehension", "Verbal Reasoning", "Synonyms & Antonyms"]
+  "English Language": ["Grammar", "Vocabulary", "Reading Comprehension", "Verbal Reasoning", "Synonyms & Antonyms"],
+  "Aptitude": ["Quantitative Reasoning", "Logical Reasoning", "Data Interpretation", "Verbal Ability", "Spatial Reasoning"]
 };
 
 window.quizApp = {
@@ -91,7 +92,7 @@ window.quizApp = {
                 document.getElementById("limit-message").textContent = "Please log in to continue.";
                 document.getElementById("limit-login-btn").style.display = "inline-block";
             } else {
-                document.getElementById("limit-message").textContent = "You have reached your quiz limit. (Resets automatically over time).";
+                document.getElementById("limit-message").textContent = "You have reached your quiz limit. (Resets automatically after 4 hrs.)";
                 document.getElementById("limit-login-btn").style.display = "none";
             }
 

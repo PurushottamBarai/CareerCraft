@@ -8,15 +8,12 @@ const cors = require("cors");
 const { Resend } = require("resend");
 const path = require("path");
 const fs = require("fs").promises;
-const { GoogleGenAI } = require("@google/genai");
 const { generateResumeDocx } = require("./resume-generator");
 
-// Initialize Gemini Client
-const ai = process.env.GEMINI_API_KEY
-  ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
-  : null;
-
 const app = express();
+
+// Trust reverse proxies (important for correct req.ip in Render/Railway rate limiting)
+app.set("trust proxy", 1);
 
 const dbConfig = {
   host: process.env.MYSQLHOST || process.env.MYSQL_HOST || "localhost",
@@ -163,21 +160,28 @@ async function setupTables() {
     const [admins] = await db.execute("SELECT COUNT(*) as count FROM admin");
     const adminUsername = process.env.ADMIN_USERNAME || "admin";
     const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
-    const hashedPassword = await bcrypt.hash(adminPassword, 12);
 
     if (admins[0].count === 0) {
       // First boot: Create
+      const hashedPassword = await bcrypt.hash(adminPassword, 12);
       await db.execute(
         "INSERT INTO admin (username, password, email) VALUES (?, ?, ?)",
         [adminUsername, hashedPassword, "admin@careercraft.com"],
       );
     } else {
-      // Subsequent boot: Sync with env variables if provided
+      // Subsequent boot: Sync with env variables if provided and changed
       if (process.env.ADMIN_USERNAME && process.env.ADMIN_PASSWORD) {
-        await db.execute(
-          "UPDATE admin SET username = ?, password = ? ORDER BY id ASC LIMIT 1",
-          [adminUsername, hashedPassword],
-        );
+        const [currentAdmin] = await db.execute("SELECT username, password FROM admin ORDER BY id ASC LIMIT 1");
+        if (currentAdmin.length > 0) {
+          const isMatch = await bcrypt.compare(adminPassword, currentAdmin[0].password);
+          if (!isMatch || currentAdmin[0].username !== adminUsername) {
+            const newHashedPassword = await bcrypt.hash(adminPassword, 12);
+            await db.execute(
+              "UPDATE admin SET username = ?, password = ? ORDER BY id ASC LIMIT 1",
+              [adminUsername, newHashedPassword],
+            );
+          }
+        }
       }
     }
   } catch (error) {
@@ -213,6 +217,7 @@ app.use(
 app.use(express.json());
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 app.use(express.static(path.join(__dirname, "../frontend")));
+
 
 const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
@@ -261,13 +266,11 @@ if (process.env.RESEND_API_KEY) {
 const auth = (req, res, next) => {
   const header = req.headers["authorization"];
   if (!header) {
-    console.log("No authorization header provided");
     return res.status(401).json({ message: "No token provided" });
   }
 
   const token = header.split(" ")[1];
   if (!token) {
-    console.log("No token found in authorization header");
     return res.status(401).json({ message: "No token provided" });
   }
 
@@ -306,6 +309,9 @@ const requireRole = (roles) => (req, res, next) => {
   }
   next();
 };
+
+const quizRoutes = require('./quiz/quizRoutes');
+app.use('/api/quiz', quizRoutes(() => db, auth));
 
 const sendEmail = async (to, subject, html, userId, type) => {
   try {
@@ -478,9 +484,9 @@ app.post("/api/auth/login", async (req, res) => {
       }
 
       const token = jwt.sign(
-        { username: admin.username, role: "admin" },
+        { id: admin.id, username: admin.username, role: "admin" },
         process.env.JWT_SECRET || "fallback_secret_for_dev_only",
-        { expiresIn: "24h" },
+        { expiresIn: "8h" },
       );
 
       return res.json({
@@ -511,7 +517,7 @@ app.post("/api/auth/login", async (req, res) => {
     const token = jwt.sign(
       { id: user.id, role: user.role, email: user.email },
       process.env.JWT_SECRET || "fallback_secret_for_dev_only",
-      { expiresIn: "24h" },
+      { expiresIn: "8h" },
     );
 
     delete user.password;
@@ -610,6 +616,7 @@ app.get("/api/admin/jobs", adminAuth, async (req, res) => {
           skills = job.skills;
         }
       } catch (e) {
+        console.error(`Error parsing skills for job ${job.id}:`, e);
         skills = [];
       }
       return { ...job, skills };
@@ -705,11 +712,22 @@ app.get("/api/jobs", auth, async (req, res) => {
       [studentId],
     );
 
-    const processedJobs = jobs.map((job) => ({
-      ...job,
-      hasApplied: !!job.hasApplied,
-      skills: typeof job.skills === "string" ? JSON.parse(job.skills) : job.skills,
-    }));
+    const processedJobs = jobs.map((job) => {
+      let parsedSkills = job.skills;
+      if (typeof job.skills === "string") {
+        try {
+          parsedSkills = JSON.parse(job.skills);
+        } catch (e) {
+          console.error(`Invalid JSON in skills for job ${job.id}:`, e);
+          parsedSkills = [];
+        }
+      }
+      return {
+        ...job,
+        hasApplied: !!job.hasApplied,
+        skills: parsedSkills,
+      };
+    });
 
     res.json(processedJobs);
   } catch (error) {
@@ -720,7 +738,7 @@ app.get("/api/jobs", auth, async (req, res) => {
 
 app.post("/api/jobs", auth, requireRole(["employer"]), async (req, res) => {
   try {
-    const { title, description, skills, experienceYears, location, salary } = req.body;
+    const { title, description, skills, experienceYears, experienceMonths, location, salary } = req.body;
 
     if (!title || !description || !skills || !location) {
       return res.status(400).json({ message: "Missing required fields" });
@@ -731,9 +749,9 @@ app.post("/api/jobs", auth, requireRole(["employer"]), async (req, res) => {
     }
 
     const [result] = await db.query(
-      `INSERT INTO jobs (employerId, title, description, skills, experienceYears, location, salary)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [req.user.id, title, description, JSON.stringify(skills), experienceYears || 0, location, salary || null],
+      `INSERT INTO jobs (employerId, title, description, skills, experienceYears, experienceMonths, location, salary)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [req.user.id, title, description, JSON.stringify(skills), experienceYears || 0, experienceMonths || 0, location, salary || null],
     );
 
     res.status(201).json({ message: "Job posted successfully", jobId: result.insertId });
@@ -954,7 +972,7 @@ app.get("/api/stats/student", auth, requireRole(["student"]), async (req, res) =
 app.get("/api/auth/profile", auth, async (req, res) => {
   try {
     const [users] = await db.query(
-      "SELECT id, firstName, username, email, role, companyName, college, course, graduationYear, phone, address, profileImage, createdAt FROM users WHERE id = ?",
+      "SELECT id, firstName, lastName, username, email, role, companyName, college, course, graduationYear, phone, address, profileImage, createdAt FROM users WHERE id = ?",
       [req.user.id],
     );
 
@@ -1023,9 +1041,11 @@ app.post("/api/resume/generate", optionalAuth, async (req, res) => {
         return res.status(403).json({ message: "You have reached the limit of 5 resumes per 4 hours. Please try again later." });
       }
     } else {
+      const guestTimeLimit = new Date();
+      guestTimeLimit.setHours(guestTimeLimit.getHours() - 8);
       const [rows] = await db.query(
-        "SELECT COUNT(*) as count FROM resume_attempts WHERE session_id = ?",
-        [sessionId],
+        "SELECT COUNT(*) as count FROM resume_attempts WHERE session_id = ? AND created_at >= ?",
+        [sessionId, guestTimeLimit],
       );
       if (rows[0].count >= 1) {
         return res.status(403).json({ message: "Guests are limited to 1 resume. Please log in to continue." });
@@ -1062,6 +1082,45 @@ app.post("/api/resume/generate", optionalAuth, async (req, res) => {
   } catch (error) {
     console.error("Error generating resume docx:", error);
     res.status(500).json({ message: "Failed to generate AI Resume.", error: error.message });
+  }
+});
+
+// ============ CONTACT ROUTE ============
+
+app.post("/api/contact/validate", async (req, res) => {
+  try {
+    const { email, phone, feedback } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required." });
+    }
+
+    // 1. Validate max message length (100 words)
+    if (feedback) {
+      const words = feedback.trim().split(/\s+/);
+      if (words.length > 100) {
+        return res.status(400).json({ message: "Message cannot exceed 100 words." });
+      }
+    }
+
+    // 2. Validate phone number regex
+    if (phone) {
+      const phoneRegex = /^(?:\+91|91)?[6-9]\d{9}$/;
+      if (!phoneRegex.test(phone)) {
+        return res.status(400).json({ message: "Invalid Phone Number" });
+      }
+    }
+
+    // 3. Database Check: Email must be registered in the users table
+    const [rows] = await db.query("SELECT id FROM users WHERE email = ?", [email]);
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Email must be registered with an account." });
+    }
+
+    res.status(200).json({ message: "Validation passed." });
+  } catch (error) {
+    console.error("Error validating contact form:", error);
+    res.status(500).json({ message: "An error occurred during validation." });
   }
 });
 

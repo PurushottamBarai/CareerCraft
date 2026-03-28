@@ -9,7 +9,7 @@
     <input type="text" placeholder="Job title, skills, companies, or search syntax">
     <div class="divider"></div>
     <input type="text" placeholder="City, state, or zip code">
-    <button onclick="if(window.showEmployerRegister) ">Find</button>
+    <button onclick="if(typeof currentUser !== 'undefined' && currentUser) { alert('working on this feature'); } else { showEmployerRegister(); }">Find</button>
   </div>
 </div>
 

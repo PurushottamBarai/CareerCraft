@@ -1,0 +1,139 @@
+.contact-wrapper {
+    display: flex;
+    justify-content: center;
+    gap: 4rem;
+    padding: 4rem 2rem;
+    background-color: #1e2c3a; /* Dark blue matching Naukri screenshot */
+    min-height: 80vh;
+    color: white;
+    font-family: Arial, sans-serif;
+    border-radius: 8px; /* Fit perfectly in existing container */
+    margin-top: 2rem;
+}
+
+.contact-left {
+    flex: 1;
+    max-width: 500px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.contact-heading {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 1.8rem;
+    font-weight: 300;
+    margin-bottom: 2rem;
+    color: white;
+}
+
+.contact-heading svg {
+    flex-shrink: 0;
+}
+
+.contact-info-text {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #e0e5ea;
+}
+
+.contact-right {
+    flex: 1;
+    max-width: 500px;
+}
+
+.contact-form-box {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    color: #333;
+}
+
+.contact-form-box h2 {
+    font-size: 1.4rem;
+    font-weight: 400;
+    margin-bottom: 1.5rem;
+    color: #333;
+}
+
+.contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.contact-input {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    background-color: #efefef;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    color: #333;
+    outline: none;
+    transition: border-color 0.2s;
+    font-family: Arial, sans-serif;
+}
+
+.contact-input::placeholder {
+    color: #777;
+}
+
+.contact-input:focus {
+    border-color: #b0bfd0;
+    background-color: #fafafa;
+}
+
+.contact-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23333%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem top 50%;
+    background-size: 0.65rem auto;
+}
+
+.contact-textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.contact-submit-btn {
+    align-self: flex-start;
+    background-color: #4a90e2; /* Naukri blue */
+    color: white;
+    padding: 0.6rem 2rem;
+    font-size: 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-top: 0.5rem;
+}
+
+.contact-submit-btn:hover {
+    background-color: #357abd;
+}
+
+/* Responsiveness */
+@media (max-width: 900px) {
+    .contact-wrapper {
+        flex-direction: column;
+        align-items: center;
+        padding: 2rem 1.5rem;
+    }
+
+    .contact-left {
+        width: 100%;
+        max-width: 100%;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .contact-heading {
+        justify-content: center;
+    }
+}

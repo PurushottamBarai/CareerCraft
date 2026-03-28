@@ -1,9 +1,11 @@
 # Dependencies
 node_modules/
 
-# Environment 
+# Environment
 .env
 .env.*
+.env.local
+.env.production
 
 # Logs and Debug
 logs/
@@ -15,6 +17,7 @@ yarn-error.log*
 # OS Files
 .DS_Store
 Thumbs.db
+Desktop.ini
 
 # IDE & Editor
 .vscode/
@@ -31,10 +34,17 @@ build/
 *.zip
 *.tar.gz
 
-# Database
-*.sql
-*.sqlite
-
-# App Specific Files
+# Uploaded User Files
+backend/uploads/
 uploads/
+
+# Test & Generated Files
 test*.docx
+*.docx
+
+# Database Dumps (keep schema in repo, ignore local dumps)
+careercraft-dump*.sql
+*-dump.sql
+*.sqlite
+example.html
+example.css

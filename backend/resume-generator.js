@@ -1,4 +1,4 @@
-const { Document, Packer, Paragraph, TextRun, HeadingLevel, BorderStyle, AlignmentType, TabStopPosition, TabStopType, DocumentObject, Tab } = require('docx');
+const { Document, Packer, Paragraph, TextRun, HeadingLevel, BorderStyle, AlignmentType, TabStopPosition, TabStopType, Tab } = require('docx');
 
 // Helper to create a section heading
 function createSectionHeading(text) {

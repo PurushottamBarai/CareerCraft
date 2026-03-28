@@ -1,0 +1,49 @@
+<div class="contact-wrapper">
+    <div class="contact-left">
+        <h1 class="contact-heading">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+            CareerCraft Support Services
+        </h1>
+        <p class="contact-info-text">
+            <strong>Feel free to reach out to us!</strong><br><br>
+            If you have any questions, suggestions, or need assistance, our support team is always here to help you navigate your career journey.
+        </p>
+        <p class="contact-info-text" style="margin-top: 2rem;">
+            <strong>Email Id:</strong> support@codedeck.me<br><br>
+        </p>
+    </div>
+
+    <div class="contact-right">
+        <div class="contact-form-box">
+            <h2>Report a Problem/Need Assistance</h2>
+            <div id="contactErrorMsg" class="error-message hidden" style="color: #dc2626; background: #fee2e2; padding: 0.75rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.9rem;"></div>
+            <form id="contactForm" action="https://formsubmit.co/support@codedeck.me" method="POST" class="contact-form" onsubmit="handleContactSubmit(event)">
+                <!-- Disable Captcha for smoother UX -->
+                <input type="hidden" name="_captcha" value="false">
+                <input type="hidden" name="_next" id="contactNextUrl" value="">
+                
+                <input type="text" name="Name" placeholder="Enter Your Name" required class="contact-input">
+                <input type="email" id="contactEmail" name="Email" placeholder="Enter Your Registered Email ID" required class="contact-input">
+                <input type="tel" id="contactPhone" name="Phone" placeholder="Enter Your Contact Number" required class="contact-input" pattern="^(?:\+91|91)?[6-9]\d{9}$" title="Invalid Phone Number">
+                
+                <select name="Area_of_Concern" required class="contact-input contact-select">
+                    <option value="" disabled selected>Select Area of Concern</option>
+                    <option value="Create Profile">Create Profile</option>
+                    <option value="Search">Search</option>
+                    <option value="Apply">Apply</option>
+                    <option value="Getting around">Getting around CareerCraft</option>
+                    <option value="Settings">Settings</option>
+                    <option value="Security Advice">Security Advice</option>
+                    <option value="Others">Others</option>
+                </select>
+
+                <textarea name="Feedback" id="contactFeedback" placeholder="Enter Your Feedback" required class="contact-input contact-textarea"></textarea>
+
+                <button type="submit" id="contactSubmitBtn" class="contact-submit-btn">Submit</button>
+            </form>
+        </div>
+    </div>
+</div>

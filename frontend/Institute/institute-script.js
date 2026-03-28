@@ -45,17 +45,17 @@ function checkAdminAuth() {
     }
   }
 
-  // Not logged in as admin, redirect to main login
-  alert("Please login as admin first");
-  window.location.href = "../index.html";
+  // Not logged in as admin, show local admin login
+  const loginSection = document.getElementById("loginSection");
+  if (loginSection) loginSection.classList.remove("hidden");
 }
 
 function showAdminPanel() {
   console.log("Showing admin panel...");
-  const loadingSection = document.getElementById("loadingSection");
+  const loginSection = document.getElementById("loginSection");
   const adminPanel = document.getElementById("adminPanel");
 
-  if (loadingSection) loadingSection.classList.add("hidden");
+  if (loginSection) loginSection.classList.add("hidden");
   if (adminPanel) {
     adminPanel.classList.remove("hidden");
     loadAllData();
@@ -65,12 +65,71 @@ function showAdminPanel() {
 }
 
 // Admin Login
+document.addEventListener("DOMContentLoaded", () => {
+  const loginForm = document.getElementById("adminLoginForm");
+  if (loginForm) {
+    loginForm.addEventListener("submit", handleAdminLogin);
+  }
+});
+
+async function handleAdminLogin(e) {
+  e.preventDefault();
+  const email = document.getElementById("admin-username").value;
+  const password = document.getElementById("admin-password").value;
+  const btn = document.getElementById("adminLoginBtn");
+
+  btn.innerHTML = `<span class="btn-loader"></span> Verifying...`;
+  btn.disabled = true;
+
+  try {
+    const response = await fetch(`${API_BASE}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const result = await response.json();
+
+    if (response.ok && result.user && result.user.role === "admin") {
+      localStorage.setItem("token", result.token);
+      localStorage.setItem("user", JSON.stringify(result.user));
+      adminToken = result.token;
+      showAdminPanel();
+    } else {
+      alert(result.message || "Invalid admin credentials");
+      if (response.ok) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+      }
+    }
+  } catch (error) {
+    console.error("Login error:", error);
+    alert("Login failed. Please try again.");
+  } finally {
+    btn.textContent = "Login";
+    btn.disabled = false;
+  }
+}
+
+function toggleAdminPassword() {
+  const pwd = document.getElementById("admin-password");
+  const toggleBtn = document.querySelector(".toggle-password");
+  if (pwd.type === "password") {
+    pwd.type = "text";
+    toggleBtn.textContent = "Hide";
+  } else {
+    pwd.type = "password";
+    toggleBtn.textContent = "Show";
+  }
+}
 
 function logout() {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
   adminToken = null;
-  window.location.href = "../index.html";
+  // Let the check run again so it shows the local login screen
+  document.getElementById("adminPanel").classList.add("hidden");
+  checkAdminAuth();
 }
 
 // Load All Data
@@ -322,7 +381,7 @@ function updateStats() {
 }
 
 // Tab Management
-function showTab(tabName) {
+function showTab(event, tabName) {
   // Hide all tabs
   document.querySelectorAll(".tab-content").forEach((tab) => {
     tab.classList.add("hidden");
@@ -337,7 +396,9 @@ function showTab(tabName) {
   document.getElementById(tabName + "Tab").classList.remove("hidden");
 
   // Add active class to clicked button
-  event.target.classList.add("active");
+  if (event && event.target) {
+    event.target.classList.add("active");
+  }
 }
 
 // Search/Filter Functions
@@ -387,14 +448,16 @@ function filterApplications() {
   });
 }
 
-function filterMessages(type) {
+function filterMessages(event, type) {
   // Remove active class from all filter buttons
   document.querySelectorAll(".filter-btn").forEach((btn) => {
     btn.classList.remove("active");
   });
 
   // Add active class to clicked button
-  event.target.classList.add("active");
+  if (event && event.target) {
+    event.target.classList.add("active");
+  }
 
   // Filter logic would go here
   console.log("Filtering messages by:", type);
@@ -517,9 +580,9 @@ function closeModal() {
 }
 
 // Close modal when clicking outside
-window.onclick = function (event) {
+window.addEventListener("click", function (event) {
   const modal = document.getElementById("userDetailModal");
   if (event.target === modal) {
     closeModal();
   }
-};
+});

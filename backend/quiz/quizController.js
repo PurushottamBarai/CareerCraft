@@ -31,9 +31,12 @@ module.exports = function(getDb) {
             if (!sessionId) {
                 return { allowed: true, remaining: 1, isGuest: true };
             }
+            // Guest user limit reset after 8 hours
+            const guestTimeLimit = new Date();
+            guestTimeLimit.setHours(guestTimeLimit.getHours() - 8);
             const [rows] = await db.query(
-                "SELECT COUNT(*) as count FROM quiz_attempts WHERE session_id = ?", 
-                [sessionId]
+                "SELECT COUNT(*) as count FROM quiz_attempts WHERE session_id = ? AND created_at >= ?", 
+                [sessionId, guestTimeLimit]
             );
             return {
                 allowed: rows[0].count < 1,
@@ -53,7 +56,7 @@ module.exports = function(getDb) {
                 res.json(limitCalc);
             } catch (error) {
                 console.error("Error fetching access status:", error);
-                res.status(500).json({ allowed: false, reason: "Server error: " + error.message, error: error.stack });
+                res.status(500).json({ allowed: false, reason: "Server error: " + error.message });
             }
         },
 
@@ -110,6 +113,11 @@ Each object MUST have:
             try {
                 const { subject, topic, score, totalQuestions, sessionId } = req.body;
                 
+                const limitCalc = await checkLimits(req.user, sessionId);
+                if (!limitCalc.allowed) {
+                    return res.status(403).json({ error: limitCalc.reason });
+                }
+
                 if (req.user) {
                     await db.execute(
                         "INSERT INTO quiz_attempts (user_id, subject, topic, score, total_questions) VALUES (?, ?, ?, ?, ?)",

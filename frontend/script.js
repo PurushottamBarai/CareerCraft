@@ -8,8 +8,6 @@ const API_BASE = (() => {
   const port = window.location.port;
   const protocol = window.location.protocol;
 
-  console.log("Current location:", { hostname, port, protocol });
-
   // Local development
   if (hostname === "localhost" || hostname === "127.0.0.1") {
     return `${protocol}//${hostname}:${port || 5000}/api`;
@@ -19,15 +17,67 @@ const API_BASE = (() => {
   return "/api";
 })();
 
-console.log("API Base URL:", API_BASE);
 
+// XSS Sanitization Helper
+function escapeHTML(str) {
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 document.addEventListener("DOMContentLoaded", function () {
   checkAuthStatus();
   setupEventListeners();
   loadFooter();
+
+  // Basic Router for backward navigation
+  const hash = window.location.hash;
+  if(hash === '#quizzes' && typeof showQuiz === 'function') setTimeout(showQuiz, 100);
+  if((hash === '#hackathons' || hash === '#contests') && typeof showHackathons === 'function') setTimeout(showHackathons, 100);
+  if(hash === '#internships' && typeof showInternships === 'function') setTimeout(showInternships, 100);
+  if(hash === '#resume' && typeof handleResumeGenerationNav === 'function') setTimeout(() => document.getElementById("homeSection").classList.contains("hidden") || handleResumeGenerationNav(), 100);
 });
 
 function setupEventListeners() {
+  const hamburgerBtn = document.getElementById("hamburger-btn");
+  const navLinks = document.getElementById("nav-links");
+  if (hamburgerBtn && navLinks) {
+    hamburgerBtn.addEventListener("click", () => {
+      hamburgerBtn.classList.toggle("active");
+      navLinks.classList.toggle("active");
+    });
+    // Support exact touch toggling for sub-menus on mobile (replacing finicky hover)
+    document.querySelectorAll(".nav-hover-link").forEach(link => {
+       link.addEventListener("click", (e) => {
+         if (window.innerWidth <= 900) {
+             const dropdown = link.nextElementSibling;
+             if (dropdown && dropdown.classList.contains("hover-dropdown")) {
+                 e.preventDefault();
+                 const isCurrentlyOpen = dropdown.style.display === "flex";
+                 // Close all first
+                 document.querySelectorAll(".hover-dropdown").forEach(d => d.style.display = "");
+                 // Toggle target
+                 if (!isCurrentlyOpen) {
+                     dropdown.style.display = "flex";
+                     dropdown.style.flexDirection = "column";
+                 }
+             }
+         }
+       });
+    });
+
+    // Close mobile menu only when an actual destination link is clicked
+    document.querySelectorAll(".hover-dropdown a, .nav-btn").forEach(link => {
+       link.addEventListener("click", () => {
+         hamburgerBtn.classList.remove("active");
+         navLinks.classList.remove("active");
+       });
+    });
+  }
+
   document
     .getElementById("loginFormData")
     .addEventListener("submit", handleLogin);
@@ -83,7 +133,7 @@ function setupEventListeners() {
 
 async function loadHomeContent() {
   try {
-    const response = await fetch("home/home.html?t=" + new Date().getTime());
+    const response = await fetch("home/home.html");
     const html = await response.text();
 
     // Extract just the body content
@@ -140,7 +190,7 @@ function showHome() {
 
 async function loadEmployerHomeContent() {
   try {
-    const response = await fetch("home/employer-home.html?t=" + new Date().getTime());
+    const response = await fetch("home/employer-home.html");
     const html = await response.text();
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, "text/html");
@@ -170,7 +220,7 @@ function showEmployerHome() {
 
 async function loadHelpContent() {
   try {
-    const response = await fetch("help/help.html?t=" + new Date().getTime());
+    const response = await fetch("help/help.html");
     const html = await response.text();
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, "text/html");
@@ -194,7 +244,7 @@ function showHelpCenter() {
 
 async function loadQuizContent() {
   try {
-    const response = await fetch("quiz/quiz.html?t=" + new Date().getTime());
+    const response = await fetch("quiz/quiz.html");
     const html = await response.text();
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, "text/html");
@@ -221,7 +271,7 @@ function showQuiz() {
 
 async function loadAboutContent() {
   try {
-    const response = await fetch("about/about.html?t=" + new Date().getTime());
+    const response = await fetch("about/about.html");
     const html = await response.text();
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, "text/html");
@@ -243,9 +293,170 @@ function showAbout() {
   loadAboutContent();
 }
 
+async function loadContactContent() {
+  try {
+    const response = await fetch("contact/contact.html");
+    const html = await response.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+    const bodyContent = doc.body.innerHTML;
+    document.getElementById("contactSection").innerHTML = bodyContent;
+  } catch (error) {
+    console.error("Error loading contact content:", error);
+  }
+}
+
+window.showContact = function() {
+  hideAllSections();
+  const section = document.getElementById("contactSection");
+  const container = document.querySelector(".container");
+  
+  if (section) section.classList.remove("hidden");
+  if (container) container.classList.add("home-active");
+  
+  loadContactContent();
+};
+
+window.handleContactSubmit = async function(e) {
+  e.preventDefault();
+  const form = e.target;
+  const errorMsg = document.getElementById("contactErrorMsg");
+  const submitBtn = document.getElementById("contactSubmitBtn");
+  
+  const email = document.getElementById("contactEmail").value;
+  const phone = document.getElementById("contactPhone").value;
+  const feedback = document.getElementById("contactFeedback").value;
+
+  // Dynamic set of _next redirect to bounce user back naturally
+  document.getElementById("contactNextUrl").value = window.location.origin;
+
+  // Words validation
+  if (feedback) {
+    const words = feedback.trim().split(/\s+/);
+    if (words.length > 100) {
+      errorMsg.textContent = "Message cannot exceed 100 words.";
+      errorMsg.classList.remove("hidden");
+      return;
+    }
+  }
+
+  try {
+    submitBtn.textContent = "Validating...";
+    submitBtn.disabled = true;
+    errorMsg.classList.add("hidden");
+
+    const response = await fetch(`${API_BASE}/contact/validate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, phone, feedback })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Failed to validate details");
+    }
+
+    // API approved the DB check! Submit the form natively to FormSubmit.co
+    submitBtn.textContent = "Sending...";
+    form.submit();
+
+  } catch (error) {
+    errorMsg.textContent = error.message;
+    errorMsg.classList.remove("hidden");
+    submitBtn.textContent = "Submit";
+    submitBtn.disabled = false;
+  }
+};
+
+// ======================= ROADMAP RENDERING ENGINE =======================
+async function loadRoadmapHubContent() {
+  try {
+    const response = await fetch("roadmaps/roadmaps.html");
+    const html = await response.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+    const bodyContent = doc.body.innerHTML;
+    document.getElementById("roadmapSection").innerHTML = bodyContent;
+  } catch (error) {
+    console.error("Error loading roadmaps:", error);
+  }
+}
+
+window.showRoadmap = function() {
+  hideAllSections();
+  const section = document.getElementById("roadmapSection");
+  const container = document.querySelector(".container");
+  
+  if (section) section.classList.remove("hidden");
+  if (container) container.classList.add("home-active");
+  
+  loadRoadmapHubContent();
+};
+
+
+// ======================= HACKATHONS ENGINE =======================
+async function loadHackathonsContent() {
+  try {
+    const response = await fetch("hackathons/hackathons.html");
+    const html = await response.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+    const bodyContent = doc.body.innerHTML;
+    document.getElementById("hackathonSection").innerHTML = bodyContent;
+  } catch (error) {
+    console.error("Error loading hackathons layout:", error);
+  }
+}
+
+window.showHackathons = function(e) {
+  if (e) e.preventDefault();
+  hideAllSections();
+  const section = document.getElementById("hackathonSection");
+  const container = document.querySelector(".container");
+  
+  if (section) section.classList.remove("hidden");
+  if (container) container.classList.add("home-active");
+  
+  loadHackathonsContent();
+};
+
+// ======================= INTERNSHIPS ENGINE =======================
+async function loadInternshipsContent() {
+  try {
+    const response = await fetch("internships/internships.html");
+    const html = await response.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+    const bodyContent = doc.body.innerHTML;
+    document.getElementById("internshipsSection").innerHTML = bodyContent;
+  } catch (error) {
+    console.error("Error loading internships layout:", error);
+  }
+}
+
+window.showInternships = function(e) {
+  if (e) e.preventDefault();
+  hideAllSections();
+  const section = document.getElementById("internshipsSection");
+  const container = document.querySelector(".container");
+  
+  if (section) section.classList.remove("hidden");
+  if (container) container.classList.add("home-active");
+  
+  loadInternshipsContent();
+};
+
 async function handleApplyJob(e) {
   e.preventDefault();
   const formData = new FormData(e.target);
+
+  // Client-side file size validation (limit to 5MB)
+  const resumeFile = formData.get("resume");
+  if (resumeFile && resumeFile.size > 5 * 1024 * 1024) {
+    alert("Resume file size must be less than 5MB.");
+    return;
+  }
 
   try {
     const response = await fetch(`${API_BASE}/applications`, {
@@ -270,18 +481,12 @@ async function handleApplyJob(e) {
 }
 
 function checkAuthStatus() {
-  console.log("Checking authentication status...");
-
   const user = localStorage.getItem("user");
   const token = localStorage.getItem("token");
-
-  console.log("User in storage:", !!user);
-  console.log("Token in storage:", !!token);
 
   if (user && token) {
     try {
       currentUser = JSON.parse(user);
-      console.log("Current user loaded:", currentUser);
 
       if (currentUser && currentUser.role && currentUser.firstName) {
         updateNavigation();
@@ -304,7 +509,6 @@ function checkAuthStatus() {
     }
   }
 
-  console.log("No valid session found, showing home");
   showHome();
   return false;
 }
@@ -340,7 +544,7 @@ function updateNavigation() {
 // Resume Routers
 async function loadResumeContent() {
   try {
-    const response = await fetch("resume/resume.html?t=" + new Date().getTime());
+    const response = await fetch("resume/resume.html");
     const html = await response.text();
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, "text/html");
@@ -419,6 +623,9 @@ function hideAllSections() {
   if (container) {
     container.classList.remove("home-active");
   }
+  
+  // Important SPA fix: always snap back to top when switching main views!
+  window.scrollTo({ top: 0, behavior: "instant" });
 
   // Hide quiz specific overlays if any
   const quizModal = document.getElementById("quiz-limit-modal");
@@ -426,14 +633,12 @@ function hideAllSections() {
 }
 
 function showPostJob(event) {
-  console.log("Showing post job section");
   setActiveTab(event);
   document.getElementById("postJobSection").classList.remove("hidden");
   document.getElementById("myJobsSection").classList.add("hidden");
 }
 
 function showMyJobs(event) {
-  console.log("Showing my jobs section");
   setActiveTab(event);
   document.getElementById("postJobSection").classList.add("hidden");
   document.getElementById("myJobsSection").classList.remove("hidden");
@@ -441,27 +646,27 @@ function showMyJobs(event) {
 }
 
 function showBrowseJobs(event) {
-  console.log("Showing browse jobs section");
   setActiveTab(event);
   document.getElementById("browseJobsSection").classList.remove("hidden");
   document.getElementById("myApplicationsSection").classList.add("hidden");
-  document.getElementById("resumeGeneratorSection").classList.add("hidden");
+  const resumeSec = document.getElementById("resumeGeneratorSection");
+  if (resumeSec) resumeSec.classList.add("hidden");
   loadAvailableJobs();
 }
 
 function showMyApplications(event) {
-  console.log("Showing my applications section");
   setActiveTab(event);
   document.getElementById("browseJobsSection").classList.add("hidden");
   document.getElementById("myApplicationsSection").classList.remove("hidden");
   loadMyApplications();
 }
 
+function showResumeGenerator(event) {
+  showResume();
+}
 
 
 function setActiveTab(event) {
-  console.log("Setting active tab, event:", event);
-
   // Remove active class from all buttons
   document.querySelectorAll(".dash-btn").forEach((btn) => {
     btn.classList.remove("active");
@@ -739,8 +944,6 @@ async function handlePostJob(e) {
     salary: formData.get("salary")?.trim() || null,
   };
 
-  console.log("Posting job with data:", jobData);
-
   try {
     const response = await fetch(`${API_BASE}/jobs`, {
       method: "POST",
@@ -752,7 +955,6 @@ async function handlePostJob(e) {
     });
 
     const result = await response.json();
-    console.log("Server response:", result);
 
     if (response.ok) {
       // Show success message
@@ -783,9 +985,7 @@ async function handlePostJob(e) {
 
 // Load jobs functions
 async function loadEmployerJobs() {
-  console.log("=== Loading Employer Jobs ===");
   const token = localStorage.getItem("token");
-  console.log("Token exists:", !!token);
 
   try {
     const response = await fetch(`${API_BASE}/jobs/employer`, {
@@ -795,8 +995,6 @@ async function loadEmployerJobs() {
       },
     });
 
-    console.log("Response status:", response.status);
-
     if (!response.ok) {
       const errorText = await response.text();
       console.error("Error response:", errorText);
@@ -804,7 +1002,6 @@ async function loadEmployerJobs() {
     }
 
     const jobs = await response.json();
-    console.log("Received jobs:", jobs);
 
     const jobsList = document.getElementById("employerJobsList");
     if (!jobsList) {
@@ -856,16 +1053,12 @@ async function loadEmployerJobs() {
 }
 
 async function loadAvailableJobs() {
-  console.log("=== Loading Available Jobs for Students ===");
   try {
     const token = localStorage.getItem("token");
-    console.log("Token exists:", !!token);
 
     const response = await fetch(`${API_BASE}/jobs`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-
-    console.log("Response status:", response.status);
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -874,7 +1067,6 @@ async function loadAvailableJobs() {
     }
 
     const jobs = await response.json();
-    console.log("Available jobs received:", jobs);
 
     const jobsList = document.getElementById("jobsList");
     if (!jobsList) {
@@ -891,32 +1083,41 @@ async function loadAvailableJobs() {
     }
 
     jobs.forEach((job) => {
-      console.log("Processing job for student:", job);
       const jobRow = document.createElement("div");
       jobRow.className = "job-row";
       const companyName =
         job.companyName || `${job.employerFirstName} ${job.employerLastName}`;
-      
+
       let actionButton = '';
       if (job.hasApplied) {
         actionButton = `<button class="apply-btn" disabled style="background-color: #6c757d; cursor: not-allowed;">Applied</button>`;
       } else {
-        actionButton = `<button class="apply-btn" onclick="openApplyModal(${job.id}, '${job.title}', '${companyName}')">Apply</button>`;
+        actionButton = `<div id="apply-btn-container-${job.id}"></div>`;
       }
 
       jobRow.innerHTML = `
-                <div>${job.title}</div>
-                <div>${companyName}</div>
-                <div>${job.skills.join(", ")}</div>
+                <div>${escapeHTML(job.title)}</div>
+                <div>${escapeHTML(companyName)}</div>
+                <div>${escapeHTML(job.skills.join(", "))}</div>
                 <div>${job.experienceYears}y ${job.experienceMonths}m</div>
                 <div>
                     ${actionButton}
                 </div>
             `;
       jobsList.appendChild(jobRow);
+
+      if (!job.hasApplied) {
+        const btnContainer = document.getElementById(`apply-btn-container-${job.id}`);
+        if (btnContainer) {
+          const btn = document.createElement("button");
+          btn.className = "apply-btn";
+          btn.textContent = "Apply";
+          btn.onclick = () => openApplyModal(job.id, job.title, companyName);
+          btnContainer.replaceWith(btn);
+        }
+      }
     });
 
-    console.log("Available jobs loaded successfully");
   } catch (error) {
     console.error("Error loading available jobs:", error);
   }
@@ -937,14 +1138,14 @@ async function loadMyApplications() {
       const appRow = document.createElement("div");
       appRow.className = "job-row";
       appRow.innerHTML = `
-                <div>${app.jobTitle}</div>
-                <div>${
+                <div>${escapeHTML(app.jobTitle)}</div>
+                <div>${escapeHTML(
                   app.companyName ||
                   app.employerFirstName + " " + app.employerLastName
-                }</div>
-                <div>${new Date(app.appliedDate).toLocaleDateString()}</div>
+                )}</div>
+                <div>${escapeHTML(new Date(app.appliedDate).toLocaleDateString())}</div>
                 <div>
-                    <span class="status-${app.status.toLowerCase()}">${app.status.toUpperCase()}</span>
+                    <span class="status-${escapeHTML(app.status.toLowerCase())}">${escapeHTML(app.status.toUpperCase())}</span>
                 </div>
             `;
       applicationsList.appendChild(appRow);
@@ -1060,23 +1261,19 @@ async function viewApplications(jobId) {
       .map(
         (app) => `
             <div style="border: 1px solid #ddd; padding: 1rem; margin: 0.5rem 0; border-radius: 5px;">
-                <strong>${app.studentFirstName} ${
-          app.studentLastName
-        }</strong><br>
-                Email: ${app.studentEmail}<br>
-                ${app.college ? `College: ${app.college}<br>` : ""}
-                ${app.course ? `Course: ${app.course}<br>` : ""}
-                ${app.phone ? `Phone: ${app.phone}<br>` : ""}
-                Applied: ${new Date(app.appliedDate).toLocaleDateString()}<br>
-                Status: <span class="status-${
-                  app.status
-                }">${app.status.toUpperCase()}</span><br>
+                <strong>${escapeHTML(app.studentFirstName)} ${escapeHTML(app.studentLastName)}</strong><br>
+                Email: ${escapeHTML(app.studentEmail)}<br>
+                ${app.college ? `College: ${escapeHTML(app.college)}<br>` : ""}
+                ${app.course ? `Course: ${escapeHTML(app.course)}<br>` : ""}
+                ${app.phone ? `Phone: ${escapeHTML(app.phone)}<br>` : ""}
+                Applied: ${escapeHTML(new Date(app.appliedDate).toLocaleDateString())}<br>
+                Status: <span class="status-${escapeHTML(app.status)}">${escapeHTML(app.status).toUpperCase()}</span><br>
                 ${
                   app.resumePath
-                    ? `<a href="${app.resumePath}" target="_blank">View Resume</a><br>`
+                    ? `<a href="${escapeHTML(app.resumePath)}" target="_blank">View Resume</a><br>`
                     : ""
                 }
-                ${app.coverLetter ? `Cover Letter: ${app.coverLetter}<br>` : ""}
+                ${app.coverLetter ? `Cover Letter: ${escapeHTML(app.coverLetter)}<br>` : ""}
                 <div style="margin-top: 0.5rem;">
                     <button onclick="updateApplicationStatus(${
                       app.id
@@ -1407,7 +1604,7 @@ function logout() {
   if (dropdown) dropdown.classList.add("hidden");
 }
 
-window.onclick = function (event) {
+window.addEventListener("click", function (event) {
   const applyModal = document.getElementById("applyModal");
   const viewModal = document.getElementById("viewApplicationsModal");
 
@@ -1417,12 +1614,12 @@ window.onclick = function (event) {
   if (event.target === viewModal) {
     closeApplicationsModal();
   }
-};
+});
 
 
 // Load footer dynamically
 function loadFooter() {
-  fetch("footer/footer.html?v=" + new Date().getTime()) // Updated path
+  fetch("footer/footer.html") // Updated path
     .then((response) => {
       if (!response.ok) {
         throw new Error("Footer file not found");

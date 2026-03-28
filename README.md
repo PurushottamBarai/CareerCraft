@@ -1,69 +1,98 @@
 # CareerCraft
 
-A comprehensive web-based platform bridging the gap between students and top employers. 
+A full-stack career platform connecting students with employers. Built for the **ThinkAI 3.0** hackathon.
 
-**Live Demo:** [CareerCraft on Render](https://careercraft-gebt.onrender.com/)
+**Live:** [careercraft-gebt.onrender.com](https://careercraft-gebt.onrender.com/)
 
 ---
 
-## Key Features
+## Features
 
-- **Student Dashboard:** Track job applications, browse available listings, and take quizzes based on core skills.
-- **Employer Dashboard:** Create, post, and effortlessly manage job openings alongside real-time application statistics.
-- **Institute Administrator:** Custom portal to oversee ecosystem statistics and user demographics.
-- **AI Resume Generator:** Dedicated engine for parsing student experiences and strictly formatting an ATS-compliant `.docx` document ready for direct application.
-- **Top Companies & Opportunities:** Browse premium companies and access career guidance metrics.
+| Feature | Description |
+|---|---|
+| **Job Board** | Employers post listings; students browse and apply |
+| **Student Dashboard** | Track applications and skill-based quiz scores |
+| **Employer Dashboard** | Manage postings and view applicant stats |
+| **AI Resume Builder** | Generates ATS-compliant `.docx` resumes via Gemini AI |
+| **Skill Quizzes** | Role-specific MCQ tests with rate limiting |
+| **Career Roadmaps** | Curated portal linking to roadmap.sh paths |
+| **Contests & Hackathons** | Platform cards linking to Devpost, MLH, Kaggle, etc. |
+| **Find Internships** | Platform cards linking to Internshala, LinkedIn, etc. |
+| **Contact Support** | Validated contact form with email verification |
+| **Institute Admin** | Separate portal for ecosystem oversight |
+
+---
 
 ## Tech Stack
 
-- **Frontend:** Vanilla HTML5, CSS3, JavaScript
-- **Backend Architecture:** Node.js with Express.js REST API
-- **Database:** MySQL relational mapping
-- **Authentication:** Custom JWT-based security alongside standard login structures
-- **AI Integrations:** Google Gemini (`gemini-2.5-flash`) structured generation prompts
-- **Document Rendering:** Next-gen declarative `.docx` rendering with custom parsing rules
+- **Frontend:** Vanilla HTML, CSS, JavaScript (SPA)
+- **Backend:** Node.js + Express.js REST API
+- **Database:** MySQL / TiDB (hosted)
+- **Auth:** JWT-based authentication
+- **AI:** Google Gemini (`gemini-2.5-flash`)
+- **Email:** Resend API + Formsubmit.co
+- **Hosting:** Render (backend + frontend served together)
 
 ---
 
 ## Getting Started
 
-### 1. Clone the repo
+### 1. Clone & install
 ```bash
-git clone <your-repo-link>
+git clone <your-repo-url>
 cd CareerCraft
-```
-
-### 2. Install dependencies
-```bash
 npm install
 ```
 
-### 3. Configure the environment
-Create a `.env` file in the root directory following the parameters of your MySQL instance, Email provider, and Gemini API Key:
+### 2. Configure environment
+Create a `.env` file in the root:
 ```env
-# Database configuration
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=your_db_password
-DB_NAME=careercraft
+# Database (MySQL / TiDB)
+MYSQLHOST=localhost
+MYSQLUSER=root
+MYSQLPASSWORD=your_password
+MYSQL_DATABASE=careercraft
+MYSQLPORT=3306
 
-# JSON Web Token Secret
+# Auth
 JWT_SECRET=your_jwt_secret
 
-# Google Gemini API
+# AI
 GEMINI_API_KEY=your_gemini_api_key
 
-# Email Sending Agent
-EMAIL_USER=your_email_address
-EMAIL_PASS=your_app_password
+# Email
+RESEND_API_KEY=your_resend_api_key
 
-# Admin Credentials
+# Admin
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=admin123
 ```
 
-### 4. Launch the platform
+### 3. Run
 ```bash
 npm start
 ```
-The server listens by default on `http://localhost:5000`.
+Server runs on `http://localhost:5000` by default.
+
+---
+
+## Project Structure
+
+```
+├── backend/
+│   ├── server.js           # Main Express server & all API routes
+│   └── resume-generator.js # DOCX generation logic
+├── frontend/
+│   ├── index.html          # SPA entry point
+│   ├── script.js           # Client-side routing & API calls
+│   ├── styles.css          # Global styles
+│   ├── home/               # Landing page
+│   ├── roadmaps/           # Career Roadmaps portal
+│   ├── hackathons/         # Contests & Hackathons portal
+│   ├── internships/        # Find Internships portal
+│   ├── contact/            # Contact form
+│   ├── quiz/               # Skill quiz UI
+│   ├── resume/             # Resume builder UI
+│   └── about/              # About page
+└── package.json
+```

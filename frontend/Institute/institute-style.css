@@ -65,7 +65,7 @@ body {
     background: #756f70;
 }
 
-/* Login Section */
+/* Minimalist Login Form Styles */
 .login-container {
     display: flex;
     justify-content: center;
@@ -76,43 +76,119 @@ body {
 
 .login-box {
     background: white;
-    padding: 3rem;
-    border-radius: 10px;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    padding: 3.5rem 3rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
     width: 100%;
-    max-width: 400px;
+    max-width: 440px;
+    margin: 0 auto;
 }
 
-.login-box h2 {
-    text-align: center;
+.login-title {
+    color: #0f172a;
+    font-size: 1.75rem;
+    font-weight: 700;
     margin-bottom: 2rem;
-    color: #333;
+    text-align: center;
 }
 
-.login-box input {
-    width: 100%;
-    padding: 0.8rem;
-    margin-bottom: 1rem;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    font-size: 1rem;
+.minimal-form .input-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1.25rem;
+    text-align: left;
 }
 
-.login-box button {
+.minimal-form label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.4rem;
+}
+
+.minimal-form input[type="text"],
+.minimal-form input[type="password"] {
     width: 100%;
-    padding: 0.8rem;
-    background: #4A90E2;
+    padding: 0.875rem 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    color: #334155;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.minimal-form input::placeholder {
+    color: #94a3b8;
+}
+
+.minimal-form input:focus {
+    outline: none;
+    border-color: #0f172a;
+    box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.1);
+}
+
+.password-group {
+    position: relative;
+}
+
+.password-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #2563eb;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.toggle-password:hover {
+    color: #1d4ed8;
+}
+
+.primary-solid {
+    width: 100%;
+    padding: 0.9rem;
+    background: #0f172a;
     color: white;
     border: none;
-    border-radius: 5px;
+    border-radius: 6px;
     font-size: 1rem;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
-    transition: background 0.3s;
+    margin-top: 1rem;
+    transition: background-color 0.2s, transform 0.1s;
 }
 
-.login-box button:hover {
-    background: #357ABD;
+.primary-solid:hover {
+    background: #1e293b;
+}
+
+.primary-solid:active {
+    transform: scale(0.98);
+}
+
+.login-alternatives {
+    margin-top: 1.5rem;
+    text-align: center;
+}
+
+.otp-link {
+    font-size: 0.9rem;
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.otp-link:hover {
+    text-decoration: underline;
 }
 
 .error-msg {
