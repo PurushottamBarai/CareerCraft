@@ -53,10 +53,6 @@ async function setupTables() {
         email VARCHAR(255) UNIQUE NOT NULL,
         password VARCHAR(255) NOT NULL,
         role ENUM('student', 'employer') NOT NULL,
-        companyName VARCHAR(255) NULL,
-        college VARCHAR(255) NULL,
-        course VARCHAR(255) NULL,
-        graduationYear INT NULL,
         phone VARCHAR(20) NULL,
         address TEXT NULL,
         profileImage VARCHAR(500) NULL,
@@ -64,6 +60,26 @@ async function setupTables() {
         isEmailVerified BOOLEAN DEFAULT FALSE,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )
+    `);
+
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS student_profiles (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        userId INT NOT NULL UNIQUE,
+        college VARCHAR(255) NOT NULL,
+        course VARCHAR(255) NOT NULL,
+        graduationYear INT NOT NULL,
+        FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS employer_profiles (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        userId INT NOT NULL UNIQUE,
+        companyName VARCHAR(255) NOT NULL,
+        FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
       )
     `);
 
@@ -393,21 +409,32 @@ app.post("/api/auth/register", async (req, res) => {
       email.split("@")[0] + "_" + Math.floor(Math.random() * 100000);
 
     const [result] = await db.query(
-      `INSERT INTO users (firstName, lastName, username, email, password, role, companyName, course, graduationYear, phone, address)
-       VALUES (?, '', ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO users (firstName, lastName, username, email, password, role, phone, address)
+       VALUES (?, '', ?, ?, ?, ?, ?, ?)`,
       [
         firstName,
         finalUsername,
         email,
         hashedPassword,
         role,
-        companyName || null,
-        course || null,
-        graduationYear || null,
         phone || null,
         address || null,
       ],
     );
+
+    const newUserId = result.insertId;
+
+    if (role === 'student') {
+      await db.query(
+        `INSERT INTO student_profiles (userId, college, course, graduationYear) VALUES (?, ?, ?, ?)`,
+        [newUserId, college || '', course || '', graduationYear || 0]
+      );
+    } else if (role === 'employer') {
+      await db.query(
+        `INSERT INTO employer_profiles (userId, companyName) VALUES (?, ?)`,
+        [newUserId, companyName || '']
+      );
+    }
 
     const emailHtml = `
       <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f9fafb; padding: 40px 20px; margin: 0;">
@@ -497,7 +524,13 @@ app.post("/api/auth/login", async (req, res) => {
 
     // Check regular users
     const [rows] = await db.query(
-      "SELECT * FROM users WHERE email = ? OR username = ?",
+      `SELECT u.*, 
+              s.college, s.course, s.graduationYear, 
+              e.companyName 
+       FROM users u 
+       LEFT JOIN student_profiles s ON u.id = s.userId 
+       LEFT JOIN employer_profiles e ON u.id = e.userId 
+       WHERE u.email = ? OR u.username = ?`,
       [email, email],
     );
 
@@ -559,7 +592,12 @@ const adminAuth = (req, res, next) => {
 app.get("/api/admin/users", adminAuth, async (req, res) => {
   try {
     const [rows] = await db.query(
-      "SELECT id, firstName, lastName, username, email, role, companyName, college, course, graduationYear, phone, address, createdAt FROM users ORDER BY createdAt DESC",
+      `SELECT u.id, u.firstName, u.lastName, u.username, u.email, u.role, u.phone, u.address, u.createdAt,
+              e.companyName, s.college, s.course, s.graduationYear
+       FROM users u
+       LEFT JOIN student_profiles s ON u.id = s.userId
+       LEFT JOIN employer_profiles e ON u.id = e.userId
+       ORDER BY u.createdAt DESC`
     );
     res.json(rows);
   } catch (error) {
@@ -571,10 +609,11 @@ app.get("/api/admin/users", adminAuth, async (req, res) => {
 app.get("/api/admin/students", adminAuth, async (req, res) => {
   try {
     const [rows] = await db.query(
-      `SELECT id, firstName, lastName, username, email, college, course, graduationYear, phone, address, createdAt 
-       FROM users 
-       WHERE role = 'student' 
-       ORDER BY createdAt DESC`,
+      `SELECT u.id, u.firstName, u.lastName, u.username, u.email, s.college, s.course, s.graduationYear, u.phone, u.address, u.createdAt 
+       FROM users u 
+       INNER JOIN student_profiles s ON u.id = s.userId
+       WHERE u.role = 'student' 
+       ORDER BY u.createdAt DESC`,
     );
     res.json(rows);
   } catch (error) {
@@ -586,10 +625,11 @@ app.get("/api/admin/students", adminAuth, async (req, res) => {
 app.get("/api/admin/employers", adminAuth, async (req, res) => {
   try {
     const [rows] = await db.query(
-      `SELECT id, firstName, lastName, username, email, companyName, phone, address, createdAt 
-       FROM users 
-       WHERE role = 'employer' 
-       ORDER BY createdAt DESC`,
+      `SELECT u.id, u.firstName, u.lastName, u.username, u.email, e.companyName, u.phone, u.address, u.createdAt 
+       FROM users u 
+       INNER JOIN employer_profiles e ON u.id = e.userId
+       WHERE u.role = 'employer' 
+       ORDER BY u.createdAt DESC`,
     );
     res.json(rows);
   } catch (error) {
@@ -601,9 +641,10 @@ app.get("/api/admin/employers", adminAuth, async (req, res) => {
 app.get("/api/admin/jobs", adminAuth, async (req, res) => {
   try {
     const [rows] = await db.query(
-      `SELECT j.*, u.firstName as employerFirstName, u.lastName as employerLastName, u.companyName
+      `SELECT j.*, u.firstName as employerFirstName, u.lastName as employerLastName, e.companyName
        FROM jobs j
        INNER JOIN users u ON j.employerId = u.id
+       INNER JOIN employer_profiles e ON u.id = e.userId
        ORDER BY j.createdAt DESC`,
     );
 
@@ -635,11 +676,12 @@ app.get("/api/admin/applications", adminAuth, async (req, res) => {
       `SELECT a.*, 
               s.firstName as studentFirstName, s.lastName as studentLastName,
               j.title as jobTitle,
-              e.firstName as employerFirstName, e.lastName as employerLastName, e.companyName
+              e.firstName as employerFirstName, e.lastName as employerLastName, emp.companyName
        FROM applications a
        INNER JOIN users s ON a.studentId = s.id
        INNER JOIN jobs j ON a.jobId = j.id
        INNER JOIN users e ON j.employerId = e.id
+       INNER JOIN employer_profiles emp ON e.id = emp.userId
        ORDER BY a.appliedDate DESC`,
     );
     res.json(rows);
@@ -702,10 +744,11 @@ app.get("/api/jobs", auth, async (req, res) => {
       `SELECT j.*, 
               u.firstName as employerFirstName, 
               u.lastName as employerLastName,
-              u.companyName,
+              e.companyName,
               CASE WHEN a.id IS NOT NULL THEN TRUE ELSE FALSE END as hasApplied
        FROM jobs j
        INNER JOIN users u ON j.employerId = u.id
+       INNER JOIN employer_profiles e ON u.id = e.userId
        LEFT JOIN applications a ON j.id = a.jobId AND a.studentId = ?
        WHERE j.isActive = TRUE
        ORDER BY j.createdAt DESC`,
@@ -794,10 +837,11 @@ app.get("/api/applications/job/:jobId", auth, requireRole(["employer"]), async (
               s.lastName as studentLastName,
               s.email as studentEmail,
               s.phone,
-              s.college,
-              s.course
+              sp.college,
+              sp.course
        FROM applications a
        INNER JOIN users s ON a.studentId = s.id
+       INNER JOIN student_profiles sp ON s.id = sp.userId
        INNER JOIN jobs j ON a.jobId = j.id
        WHERE a.jobId = ? AND j.employerId = ?
        ORDER BY a.appliedDate DESC`,
@@ -818,10 +862,11 @@ app.get("/api/applications/student", auth, requireRole(["student"]), async (req,
               j.title as jobTitle,
               u.firstName as employerFirstName,
               u.lastName as employerLastName,
-              u.companyName
+              e.companyName
        FROM applications a
        INNER JOIN jobs j ON a.jobId = j.id
        INNER JOIN users u ON j.employerId = u.id
+       INNER JOIN employer_profiles e ON u.id = e.userId
        WHERE a.studentId = ?
        ORDER BY a.appliedDate DESC`,
       [req.user.id],
@@ -972,7 +1017,12 @@ app.get("/api/stats/student", auth, requireRole(["student"]), async (req, res) =
 app.get("/api/auth/profile", auth, async (req, res) => {
   try {
     const [users] = await db.query(
-      "SELECT id, firstName, lastName, username, email, role, companyName, college, course, graduationYear, phone, address, profileImage, createdAt FROM users WHERE id = ?",
+      `SELECT u.id, u.firstName, u.lastName, u.username, u.email, u.role, u.phone, u.address, u.profileImage, u.createdAt,
+              e.companyName, s.college, s.course, s.graduationYear
+       FROM users u
+       LEFT JOIN student_profiles s ON u.id = s.userId
+       LEFT JOIN employer_profiles e ON u.id = e.userId
+       WHERE u.id = ?`,
       [req.user.id],
     );
 
@@ -993,15 +1043,21 @@ app.put("/api/auth/profile", auth, async (req, res) => {
     const userId = req.user.id;
     const role = req.user.role;
 
+    // Update core user table
+    await db.query(
+      "UPDATE users SET firstName = ?, lastName = ?, phone = ?, address = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
+      [firstName || null, lastName || null, phone || null, address || null, userId],
+    );
+
     if (role === "employer") {
       await db.query(
-        "UPDATE users SET firstName = ?, lastName = ?, phone = ?, address = ?, companyName = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
-        [firstName || null, lastName || null, phone || null, address || null, companyName || null, userId],
+        "INSERT INTO employer_profiles (userId, companyName) VALUES (?, ?) ON DUPLICATE KEY UPDATE companyName = ?",
+        [userId, companyName || null, companyName || null],
       );
     } else if (role === "student") {
       await db.query(
-        "UPDATE users SET firstName = ?, lastName = ?, phone = ?, address = ?, college = ?, course = ?, graduationYear = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
-        [firstName || null, lastName || null, phone || null, address || null, college || null, course || null, graduationYear || null, userId],
+        "INSERT INTO student_profiles (userId, college, course, graduationYear) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE college = ?, course = ?, graduationYear = ?",
+        [userId, college || null, course || null, graduationYear || null, college || null, course || null, graduationYear || null],
       );
     }
 
