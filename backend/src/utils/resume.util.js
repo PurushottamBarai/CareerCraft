@@ -1,4 +1,4 @@
-const { Document, Packer, Paragraph, TextRun, HeadingLevel, BorderStyle, AlignmentType, TabStopPosition, TabStopType, Tab } = require('docx');
+import { Document, Packer, Paragraph, TextRun, HeadingLevel, BorderStyle, AlignmentType, TabStopPosition, TabStopType, Tab } from 'docx';
 
 // Helper to create a section heading
 function createSectionHeading(text) {
@@ -251,4 +251,4 @@ async function generateResumeDocx(resumeData) {
     return buffer;
 }
 
-module.exports = { generateResumeDocx };
+export { generateResumeDocx };
