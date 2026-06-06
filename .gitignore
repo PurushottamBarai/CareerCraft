@@ -4,47 +4,27 @@ node_modules/
 # Environment
 .env
 .env.*
-.env.local
-.env.production
 
-# Logs and Debug
+# Logs
 logs/
 *.log
 npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 
 # OS Files
 .DS_Store
 Thumbs.db
 Desktop.ini
 
-# IDE & Editor
+# IDE
 .vscode/
 .idea/
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-# Build & Archives
-dist/
-build/
-*.zip
-*.tar.gz
 
 # Uploaded User Files
-backend/uploads/
-uploads/
+backend/public/uploads/
 
-# Test & Generated Files
-test*.docx
+# Generated Resumes & Documentation
+*.txt
 *.docx
 
-# Database Dumps (keep schema in repo, ignore local dumps)
-careercraft-dump*.sql
+# Database Dumps
 *-dump.sql
-*.sqlite
-example.html
-example.css
