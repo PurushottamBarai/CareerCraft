@@ -1,0 +1,84 @@
+
+.form-container {
+    background: white;
+    padding: 3rem;
+    border-radius: 10px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 500px;
+    margin: 40px auto;
+}
+
+.form-container h2 {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: #333;
+    font-size: clamp(1.4rem, 4vw, 1.8rem);
+}
+
+.form-container input,
+.form-container textarea,
+.form-container select {
+    width: 100%;
+    padding: 0.8rem;
+    margin-bottom: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.form-container input:focus,
+.form-container textarea:focus {
+    outline: none;
+    border-color: #4ade80;
+}
+
+.submit-btn {
+    width: 100%;
+    padding: 0.8rem;
+    background: #0f172a;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-weight: 500;
+}
+
+.submit-btn:hover {
+    background: #1e293b;
+}
+
+.cancel-btn {
+    width: 100%;
+    padding: 0.8rem;
+    background: #5f6265;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.cancel-btn:hover {
+    background: #5a6268;
+}
+
+.form-container p {
+    text-align: center;
+    margin-top: 1rem;
+    color: #666;
+}
+
+.form-container a {
+    color: #e74c3c;
+    text-decoration: none;
+}
+
+.form-container a:hover {
+    text-decoration: underline;
+}

@@ -17,7 +17,7 @@ export const sendEmail = async (to, subject, html, userId, type) => {
 
     if (resendClient) {
       const { data, error } = await resendClient.emails.send({
-        from: '"CareerCraft Support" <support@codedeck.me>',
+        from: '"CareerCraft" <support@codedeck.me>',
         to: [to],
         subject: subject,
         html: html,
@@ -29,7 +29,7 @@ export const sendEmail = async (to, subject, html, userId, type) => {
 
       console.log("Email successfully transmitted:", data?.id);
 
-      if (db) {
+      if (db && userId) {
         await db.query(
           "INSERT INTO email_notifications (userId, email, subject, message, type, status) VALUES (?, ?, ?, ?, ?, ?)",
           [userId, to, subject, html, type, "sent"],

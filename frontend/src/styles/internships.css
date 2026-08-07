@@ -1,0 +1,83 @@
+.internships-wrapper {
+    max-width: 1200px;
+    margin: 4rem auto 5rem;
+    font-family: 'Inter', Arial, sans-serif;
+    padding: 0 2rem;
+}
+
+.int-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.int-header h2 {
+    font-size: 2.2rem;
+    color: #0f172a;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    letter-spacing: -0.02em;
+}
+
+.int-header p {
+    color: #64748b;
+    font-size: 1.1rem;
+    max-width: 700px;
+    margin: 0 auto;
+    line-height: 1.5;
+}
+
+.int-platform-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+}
+
+.int-platform-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 2.25rem 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+}
+
+.int-platform-card:hover {
+    border-color: #3b82f6;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.12);
+}
+
+.int-platform-card h3 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 0.75rem;
+    line-height: 1.3;
+}
+
+.int-platform-card p {
+    color: #64748b;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    flex-grow: 1;
+}
+
+.int-p-link {
+    color: #2563eb;
+    font-size: 0.95rem;
+    font-weight: 600;
+    display: inline-block;
+}
+
+@media (max-width: 900px) {
+    .int-platform-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+}

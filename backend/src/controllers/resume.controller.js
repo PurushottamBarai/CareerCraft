@@ -1,5 +1,8 @@
 import { db } from "../db/database.js";
-import { generateResumeDocx } from "../utils/resume.util.js";
+
+const getResumeServiceUrl = () => {
+  return (process.env.RESUME_SERVICE_URL || "https://resumecraft-9zk4.onrender.com").replace(/\/$/, "");
+};
 
 export const generateResume = async (req, res) => {
   try {
@@ -29,12 +32,26 @@ export const generateResume = async (req, res) => {
     }
 
     const resumeData = req.body;
+    const serviceUrl = getResumeServiceUrl();
 
+    // Call standalone ResumeCraft API
+    const apiResponse = await fetch(`${serviceUrl}/api/resume/generate`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(resumeData),
+    });
 
+    if (!apiResponse.ok) {
+      const errText = await apiResponse.text().catch(() => "");
+      throw new Error(`ResumeCraft API error (${apiResponse.status}): ${errText}`);
+    }
 
-    const docxBuffer = await generateResumeDocx(resumeData);
+    const arrayBuffer = await apiResponse.arrayBuffer();
+    const docxBuffer = Buffer.from(arrayBuffer);
 
-    // Record attempt
+    // Record attempt in database
     if (req.user) {
       await db.execute("INSERT INTO resume_attempts (user_id) VALUES (?)", [req.user.id]);
     } else {
@@ -45,7 +62,38 @@ export const generateResume = async (req, res) => {
     res.setHeader("Content-Disposition", "attachment; filename=Resume.docx");
     res.send(docxBuffer);
   } catch (error) {
-    console.error("Error generating resume docx:", error);
-    res.status(500).json({ message: "Failed to generate AI Resume.", error: error.message });
+    console.error("Error generating resume via API:", error);
+    res.status(500).json({ message: "Failed to generate AI Resume via ResumeCraft API.", error: error.message });
+  }
+};
+
+export const enhanceResumeText = async (req, res) => {
+  try {
+    const { text, fieldType } = req.body;
+    if (!text || !text.trim()) {
+      return res.status(400).json({ message: "Text content is required for enhancement." });
+    }
+
+    const serviceUrl = getResumeServiceUrl();
+
+    // Call standalone ResumeCraft API
+    const apiResponse = await fetch(`${serviceUrl}/api/resume/enhance`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ text, fieldType }),
+    });
+
+    if (!apiResponse.ok) {
+      const errText = await apiResponse.text().catch(() => "");
+      throw new Error(`ResumeCraft API error (${apiResponse.status}): ${errText}`);
+    }
+
+    const data = await apiResponse.json();
+    res.json(data);
+  } catch (error) {
+    console.error("Error enhancing resume text via API:", error);
+    res.status(500).json({ message: "Failed to enhance text via ResumeCraft API.", error: error.message });
   }
 };

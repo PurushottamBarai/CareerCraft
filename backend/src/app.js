@@ -5,6 +5,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 import { db, connectDB, dbConfig } from "./db/database.js";
+import { runMigrations } from "./db/migrations.js";
 
 import { createUserModel } from "./models/user.models.js";
 import { createJobModel } from "./models/job.models.js";
@@ -50,6 +51,7 @@ async function setupTables() {
 (async () => {
   await connectDB();
   await setupTables();
+  await runMigrations();
 })();
 
 app.use(
@@ -61,7 +63,7 @@ app.use(
             /https:\/\/.*\.railway\.app$/,
             /https:\/\/.*\.up\.railway\.app$/,
           ]
-        : ["http://localhost:3000", "http://localhost:5000"],
+        : ["http://localhost:3000", "http://localhost:5000", "http://localhost:5173", "http://127.0.0.1:5173"],
     credentials: true,
   }),
 );
@@ -79,7 +81,7 @@ app.use("/api/resume", resumeRoutes);
 app.use("/api/quiz", quizRoutes);
 app.use("/api/contact", contactRoutes);
 
-// ============ CATCH-ALL & ERROR HANDLER ============
+
 app.use((req, res, next) => {
   if (req.method === "GET" && !req.path.startsWith("/api/") && !req.path.startsWith("/uploads/")) {
     return res.sendFile(path.join(__dirname, "../../frontend/index.html"));
