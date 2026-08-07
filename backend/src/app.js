@@ -68,9 +68,15 @@ app.use(
   }),
 );
 
+import fs from "fs";
+
+const distPath = path.join(__dirname, "../../frontend/dist");
+const devFrontendPath = path.join(__dirname, "../../frontend");
+const staticFrontendPath = fs.existsSync(distPath) ? distPath : devFrontendPath;
+
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "../../backend/public/uploads")));
-app.use(express.static(path.join(__dirname, "../../frontend")));
+app.use(express.static(staticFrontendPath));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
@@ -84,7 +90,10 @@ app.use("/api/contact", contactRoutes);
 
 app.use((req, res, next) => {
   if (req.method === "GET" && !req.path.startsWith("/api/") && !req.path.startsWith("/uploads/")) {
-    return res.sendFile(path.join(__dirname, "../../frontend/index.html"));
+    const indexPath = fs.existsSync(path.join(distPath, "index.html"))
+      ? path.join(distPath, "index.html")
+      : path.join(devFrontendPath, "index.html");
+    return res.sendFile(indexPath);
   }
   next();
 });

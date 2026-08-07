@@ -204,14 +204,14 @@ export const verifyOtp = async (req, res) => {
       // Check if user was created in parallel
       const [existing] = await db.query('SELECT id FROM users WHERE email = ?', [email]);
       if (existing.length > 0) {
-        await db.query('UPDATE users SET emailVerified = TRUE WHERE email = ?', [email]);
+        await db.query('UPDATE users SET isEmailVerified = TRUE WHERE email = ?', [email]);
         await db.query('DELETE FROM otp_verifications WHERE email = ?', [email]);
         return res.json({ message: 'Email verified successfully! You can now login.' });
       }
 
       // NOW insert user into database upon successful OTP verification
       const [result] = await db.query(
-        `INSERT INTO users (firstName, lastName, username, email, password, role, phone, address, emailVerified)
+        `INSERT INTO users (firstName, lastName, username, email, password, role, phone, address, isEmailVerified)
          VALUES (?, '', ?, ?, ?, ?, ?, ?, TRUE)`,
         [
           userData.firstName,
@@ -243,7 +243,7 @@ export const verifyOtp = async (req, res) => {
     }
 
     // Standard verification for existing user
-    await db.query('UPDATE users SET emailVerified = TRUE WHERE email = ?', [email]);
+    await db.query('UPDATE users SET isEmailVerified = TRUE WHERE email = ?', [email]);
     await db.query('DELETE FROM otp_verifications WHERE email = ?', [email]);
 
     res.json({ message: 'Email verified successfully! You can now login.' });

@@ -16,6 +16,9 @@ export const runMigrations = async () => {
     await db.query(`
       ALTER TABLE otp_verifications ADD COLUMN payload TEXT NULL
     `).catch(() => {});
+    await db.query(`
+      ALTER TABLE users ADD COLUMN isEmailVerified BOOLEAN DEFAULT FALSE
+    `).catch(() => {});
     console.log('Migrations complete');
   } catch (err) {
     console.error('Migration error:', err.message);
