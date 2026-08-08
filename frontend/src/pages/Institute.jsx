@@ -152,13 +152,6 @@ const Institute = () => {
               Manage students, recruiters, job postings, and placement statistics
             </p>
           </div>
-          <button
-            onClick={logout}
-            className="cancel-btn"
-            style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', color: '#0f172a' }}
-          >
-            Logout Admin
-          </button>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.25rem', marginBottom: '1.75rem' }}>
@@ -210,7 +203,7 @@ const Institute = () => {
           <input
             type="text"
             className="input-styled"
-            placeholder={`🔍 Search ${activeTab}...`}
+            placeholder={`Search ${activeTab}...`}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{ width: '100%', padding: '0.8rem 1.25rem', borderRadius: '8px', border: '1px solid #cbd5e1' }}
