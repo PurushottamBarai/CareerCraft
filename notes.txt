@@ -1,0 +1,2 @@
+multer: This is a middleware used for handling file uploads. In your backend/server.js, it is being used to handle multipart/form-data (likely for uploading files like resumes or profile pictures to your server).
+mysql2: This is the database driver used to connect your Node.js application to your MySQL database. Since you mentioned you deployed on TiDB (which is MySQL-compatible), this is what your app (backend/server.js and backend/setup-database.js) is using to talk to that database.

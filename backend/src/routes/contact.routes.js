@@ -4,6 +4,6 @@ import { validateContactForm } from "../validators/contact.validator.js";
 
 const router = express.Router();
 
-router.post("/validate", validateContactForm, validateContact);
+router.post("/", validateContactForm, validateContact);
 
 export default router;

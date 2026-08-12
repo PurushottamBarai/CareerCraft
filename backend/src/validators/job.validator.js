@@ -4,7 +4,7 @@ export const validateCreateJob = (req, res, next) => {
     return res.status(400).json({ message: "Missing required fields" });
   }
   if (!Array.isArray(skills) || skills.length === 0) {
-    return res.status(400).json({ message: "At least one skill is required" });
+    return res.status(400).json({ message: "Skills required" });
   }
   next();
 };

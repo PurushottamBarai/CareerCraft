@@ -1,10 +1,20 @@
 import express from "express";
 import { auth, requireRole } from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/upload.middleware.js";
-import { getJobApplications, getStudentApplications, submitApplication, updateApplicationStatus } from "../controllers/application.controller.js";
-import { validateSubmitApplication, validateUpdateStatus } from "../validators/application.validator.js";
+import {
+  getJobApplications,
+  getStudentApplications,
+  submitApplication,
+  updateApplicationStatus,
+} from "../controllers/application.controller.js";
+import {
+  validateSubmitApplication,
+  validateUpdateStatus,
+} from "../validators/application.validator.js";
 
 const router = express.Router();
+
+router.use(auth);
 
 const handleUploadMiddleware = (req, res, next) => {
   upload.single("resume")(req, res, (err) => {
@@ -15,9 +25,9 @@ const handleUploadMiddleware = (req, res, next) => {
   });
 };
 
-router.get("/job/:jobId", auth, requireRole(["employer"]), getJobApplications);
-router.get("/student", auth, requireRole(["student"]), getStudentApplications);
-router.post("/", auth, requireRole(["student"]), handleUploadMiddleware, validateSubmitApplication, submitApplication);
-router.patch("/:id/status", auth, requireRole(["employer"]), validateUpdateStatus, updateApplicationStatus);
+router.get("/student", requireRole(["student"]), getStudentApplications);
+router.get("/job/:jobId", requireRole(["employer"]), getJobApplications);
+router.post("/", requireRole(["student"]), handleUploadMiddleware, validateSubmitApplication, submitApplication);
+router.patch("/:id/status", requireRole(["employer"]), validateUpdateStatus, updateApplicationStatus);
 
 export default router;

@@ -58,6 +58,9 @@ export const AuthProvider = ({ children }) => {
         body: JSON.stringify(data)
       });
       const result = await res.json();
+      if (res.ok && result.verificationToken) {
+        sessionStorage.setItem('verificationToken', result.verificationToken);
+      }
       return res.ok ? { success: true, email: result.email } : { success: false, message: result.message || 'Registration failed' };
     } catch(err) {
       return { success: false, message: 'Server error' };
@@ -68,12 +71,16 @@ export const AuthProvider = ({ children }) => {
 
   const verifyOtp = async (email, otp) => {
     try {
+      const verificationToken = sessionStorage.getItem('verificationToken');
       const res = await fetch(`${API_BASE}/auth/verify-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, otp })
+        body: JSON.stringify({ email, otp, verificationToken })
       });
       const result = await res.json();
+      if (res.ok) {
+        sessionStorage.removeItem('verificationToken');
+      }
       return res.ok ? { success: true, message: result.message } : { success: false, message: result.message };
     } catch(err) {
       return { success: false, message: 'Server error' };
@@ -82,12 +89,16 @@ export const AuthProvider = ({ children }) => {
 
   const resendOtp = async (email) => {
     try {
+      const verificationToken = sessionStorage.getItem('verificationToken');
       const res = await fetch(`${API_BASE}/auth/send-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
+        body: JSON.stringify({ email, verificationToken })
       });
       const result = await res.json();
+      if (res.ok && result.verificationToken) {
+        sessionStorage.setItem('verificationToken', result.verificationToken);
+      }
       return res.ok ? { success: true } : { success: false, message: result.message };
     } catch(err) {
       return { success: false, message: 'Server error' };

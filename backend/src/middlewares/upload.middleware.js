@@ -23,7 +23,15 @@ const storage = multer.diskStorage({
   },
 });
 
-const ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx', '.png', '.jpg', '.jpeg', '.txt', '.rtf'];
+const ALLOWED_EXTENSIONS = [
+  ".pdf",
+  ".doc",
+  ".docx",
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".txt",
+];
 
 export const upload = multer({
   storage,
@@ -32,8 +40,12 @@ export const upload = multer({
     if (ALLOWED_EXTENSIONS.includes(ext)) {
       cb(null, true);
     } else {
-      cb(new Error("Invalid file format. Please upload a PDF, DOC, DOCX, TXT, or image file."));
+      cb(
+        new Error(
+          "Invalid file format. Please upload a PDF, DOC, DOCX, TXT, or image file.",
+        ),
+      );
     }
   },
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  limits: { fileSize: 10 * 1024 * 1024 },
 });

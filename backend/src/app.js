@@ -9,9 +9,6 @@ import { runMigrations } from "./db/migrations.js";
 
 import { createUserModel } from "./models/user.models.js";
 import { createJobModel } from "./models/job.models.js";
-import { createNotificationModel } from "./models/notification.models.js";
-import { createQuizModel } from "./models/quiz.models.js";
-import { createResumeModel } from "./models/resume.models.js";
 import { createAdminModel } from "./models/admin.models.js";
 
 import authRoutes from "./routes/auth.routes.js";
@@ -19,8 +16,6 @@ import adminRoutes from "./routes/admin.routes.js";
 import jobRoutes from "./routes/job.routes.js";
 import applicationRoutes from "./routes/application.routes.js";
 import statRoutes from "./routes/stat.routes.js";
-import resumeRoutes from "./routes/resume.routes.js";
-import quizRoutes from "./routes/quiz.routes.js";
 import contactRoutes from "./routes/contact.routes.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -33,9 +28,6 @@ async function setupTables() {
   try {
     await createUserModel(db);
     await createJobModel(db);
-    await createNotificationModel(db);
-    await createQuizModel(db);
-    await createResumeModel(db);
     console.log("Database tables created/verified");
   } catch (error) {
     console.error("Database setup error:", error);
@@ -54,16 +46,13 @@ async function setupTables() {
   await runMigrations();
 })();
 
+const allowedOrigins = process.env.FRONTEND_URL
+  ? process.env.FRONTEND_URL.split(",").map((url) => url.trim())
+  : true;
+
 app.use(
   cors({
-    origin:
-      process.env.NODE_ENV === "production"
-        ? [
-            process.env.FRONTEND_URL,
-            /https:\/\/.*\.railway\.app$/,
-            /https:\/\/.*\.up\.railway\.app$/,
-          ]
-        : ["http://localhost:3000", "http://localhost:5000", "http://localhost:5173", "http://127.0.0.1:5173"],
+    origin: allowedOrigins,
     credentials: true,
   }),
 );
@@ -83,8 +72,6 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/applications", applicationRoutes);
 app.use("/api/stats", statRoutes);
-app.use("/api/resume", resumeRoutes);
-app.use("/api/quiz", quizRoutes);
 app.use("/api/contact", contactRoutes);
 
 

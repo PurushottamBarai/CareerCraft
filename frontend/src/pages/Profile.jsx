@@ -52,9 +52,24 @@ const Profile = () => {
         body: JSON.stringify(formData)
       });
       if (res.ok) {
+        const data = await res.json();
         alert('Profile updated successfully!');
         setEditing(false);
-        fetchProfile();
+        if (data.user) {
+          setProfile(data.user);
+          setFormData({
+            firstName: data.user.firstName || '',
+            lastName: data.user.lastName || '',
+            phone: data.user.phone || '',
+            address: data.user.address || '',
+            companyName: data.user.companyName || '',
+            college: data.user.college || '',
+            course: data.user.course || '',
+            graduationYear: data.user.graduationYear || ''
+          });
+        } else {
+          fetchProfile();
+        }
       } else {
         const data = await res.json();
         alert(data.message || 'Failed to update profile');

@@ -1,10 +1,20 @@
 import { db } from "../db/database.js";
 
+const parseSkills = (skills) => {
+  if (typeof skills === "string") {
+    try {
+      return JSON.parse(skills);
+    } catch (e) {
+      return [];
+    }
+  }
+  return Array.isArray(skills) ? skills : [];
+};
+
 export const getEmployerJobs = async (req, res) => {
   try {
     const [jobs] = await db.query(
-      `SELECT j.*, 
-              COUNT(DISTINCT a.id) as applicationCount
+      `SELECT j.*, COUNT(DISTINCT a.id) as applicationCount
        FROM jobs j
        LEFT JOIN applications a ON j.id = a.jobId
        WHERE j.employerId = ?
@@ -13,12 +23,7 @@ export const getEmployerJobs = async (req, res) => {
       [req.user.id],
     );
 
-    const processedJobs = jobs.map((job) => ({
-      ...job,
-      skills: typeof job.skills === "string" ? JSON.parse(job.skills) : job.skills,
-    }));
-
-    res.json(processedJobs);
+    res.json(jobs.map((job) => ({ ...job, skills: parseSkills(job.skills) })));
   } catch (error) {
     console.error("Error fetching employer jobs:", error);
     res.status(500).json({ message: "Failed to fetch jobs" });
@@ -27,7 +32,6 @@ export const getEmployerJobs = async (req, res) => {
 
 export const getJobs = async (req, res) => {
   try {
-    const studentId = req.user.id;
     const [jobs] = await db.query(
       `SELECT j.*, 
               u.firstName as employerFirstName, 
@@ -36,31 +40,19 @@ export const getJobs = async (req, res) => {
               CASE WHEN a.id IS NOT NULL THEN TRUE ELSE FALSE END as hasApplied
        FROM jobs j
        INNER JOIN users u ON j.employerId = u.id
-       INNER JOIN employer_profiles e ON u.id = e.userId
+       LEFT JOIN employer_profiles e ON u.id = e.userId
        LEFT JOIN applications a ON j.id = a.jobId AND a.studentId = ?
-       WHERE j.isActive = TRUE
        ORDER BY j.createdAt DESC`,
-      [studentId],
+      [req.user.id],
     );
 
-    const processedJobs = jobs.map((job) => {
-      let parsedSkills = job.skills;
-      if (typeof job.skills === "string") {
-        try {
-          parsedSkills = JSON.parse(job.skills);
-        } catch (e) {
-          console.error(`Invalid JSON in skills for job ${job.id}:`, e);
-          parsedSkills = [];
-        }
-      }
-      return {
+    res.json(
+      jobs.map((job) => ({
         ...job,
         hasApplied: !!job.hasApplied,
-        skills: parsedSkills,
-      };
-    });
-
-    res.json(processedJobs);
+        skills: parseSkills(job.skills),
+      })),
+    );
   } catch (error) {
     console.error("Error fetching jobs:", error);
     res.status(500).json({ message: "Failed to fetch jobs" });
@@ -70,8 +62,6 @@ export const getJobs = async (req, res) => {
 export const createJob = async (req, res) => {
   try {
     const { title, description, skills, experienceYears, experienceMonths, location, salary } = req.body;
-
-
 
     const [result] = await db.query(
       `INSERT INTO jobs (employerId, title, description, skills, experienceYears, experienceMonths, location, salary)
@@ -88,19 +78,14 @@ export const createJob = async (req, res) => {
 
 export const deleteJob = async (req, res) => {
   try {
-    const jobId = req.params.id;
-    const employerId = req.user.id;
-
-    const [jobs] = await db.query(
-      "SELECT id FROM jobs WHERE id = ? AND employerId = ?",
-      [jobId, employerId],
+    const [result] = await db.query(
+      "DELETE FROM jobs WHERE id = ? AND employerId = ?",
+      [req.params.id, req.user.id],
     );
 
-    if (jobs.length === 0) {
-      return res.status(404).json({ message: "Job not found or unauthorized to delete" });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Job not found or unauthorized" });
     }
-
-    await db.query("DELETE FROM jobs WHERE id = ?", [jobId]);
 
     res.json({ message: "Job deleted successfully" });
   } catch (error) {

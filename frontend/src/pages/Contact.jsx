@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
+import { AuthContext } from '../context/AuthContext';
 import '../styles/styles.css';
 import '../styles/contact.css';
 
 const Contact = () => {
+  const { API_BASE } = useContext(AuthContext);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -21,7 +23,7 @@ const Contact = () => {
     setStatus({ loading: true, success: null, error: null });
 
     try {
-      const res = await fetch('http://localhost:5000/api/contact', {
+      const res = await fetch(`${API_BASE}/contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)

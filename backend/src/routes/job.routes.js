@@ -5,9 +5,11 @@ import { validateCreateJob } from "../validators/job.validator.js";
 
 const router = express.Router();
 
-router.get("/employer", auth, requireRole(["employer"]), getEmployerJobs);
-router.get("/", auth, getJobs);
-router.post("/", auth, requireRole(["employer"]), validateCreateJob, createJob);
-router.delete("/:id", auth, requireRole(["employer"]), deleteJob);
+router.use(auth);
+
+router.get("/", getJobs);
+router.get("/employer", requireRole(["employer"]), getEmployerJobs);
+router.post("/", requireRole(["employer"]), validateCreateJob, createJob);
+router.delete("/:id", requireRole(["employer"]), deleteJob);
 
 export default router;

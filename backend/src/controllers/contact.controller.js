@@ -12,6 +12,6 @@ export const validateContact = async (req, res) => {
     res.status(200).json({ message: "Validation passed." });
   } catch (error) {
     console.error("Error validating contact form:", error);
-    res.status(500).json({ message: "An error occurred during validation." });
+    res.status(500).json({ message: "Validation failed." });
   }
 };

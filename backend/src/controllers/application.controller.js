@@ -12,7 +12,7 @@ export const getJobApplications = async (req, res) => {
               sp.course
        FROM applications a
        INNER JOIN users s ON a.studentId = s.id
-       INNER JOIN student_profiles sp ON s.id = sp.userId
+       LEFT JOIN student_profiles sp ON s.id = sp.userId
        INNER JOIN jobs j ON a.jobId = j.id
        WHERE a.jobId = ? AND j.employerId = ?
        ORDER BY a.appliedDate DESC`,
@@ -37,7 +37,7 @@ export const getStudentApplications = async (req, res) => {
        FROM applications a
        INNER JOIN jobs j ON a.jobId = j.id
        INNER JOIN users u ON j.employerId = u.id
-       INNER JOIN employer_profiles e ON u.id = e.userId
+       LEFT JOIN employer_profiles e ON u.id = e.userId
        WHERE a.studentId = ?
        ORDER BY a.appliedDate DESC`,
       [req.user.id],
@@ -55,15 +55,13 @@ export const submitApplication = async (req, res) => {
     const { jobId, coverLetter } = req.body;
     const resumePath = req.file ? `/uploads/${req.file.filename}` : null;
 
-
-
     const [existing] = await db.query(
       "SELECT id FROM applications WHERE jobId = ? AND studentId = ?",
       [jobId, req.user.id],
     );
 
     if (existing.length > 0) {
-      return res.status(400).json({ message: "You have already applied to this job" });
+      return res.status(400).json({ message: "You have already applied" });
     }
 
     const [result] = await db.query(
@@ -83,8 +81,6 @@ export const updateApplicationStatus = async (req, res) => {
   try {
     const { status } = req.body;
     const applicationId = req.params.id;
-
-
 
     const [applications] = await db.query(
       `SELECT a.*, j.employerId 
@@ -107,7 +103,7 @@ export const updateApplicationStatus = async (req, res) => {
       [status, applicationId],
     );
 
-    res.json({ message: "Application status updated successfully" });
+    res.json({ message: "Application status updated" });
   } catch (error) {
     console.error("Error updating application status:", error);
     res.status(500).json({ message: "Failed to update status" });

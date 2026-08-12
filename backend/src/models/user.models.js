@@ -3,15 +3,13 @@ export const createUserModel = async (db) => {
     CREATE TABLE IF NOT EXISTS users (
       id INT PRIMARY KEY AUTO_INCREMENT,
       firstName VARCHAR(100) NOT NULL,
-      lastName VARCHAR(100) NOT NULL,
+      lastName VARCHAR(100) NOT NULL DEFAULT '',
       username VARCHAR(100) UNIQUE NOT NULL,
       email VARCHAR(255) UNIQUE NOT NULL,
       password VARCHAR(255) NOT NULL,
-      role ENUM('student', 'employer') NOT NULL,
+      role ENUM('student', 'employer', 'admin') NOT NULL DEFAULT 'student',
       phone VARCHAR(20) NULL,
       address TEXT NULL,
-      profileImage VARCHAR(500) NULL,
-      emailVerificationToken VARCHAR(255) NULL,
       isEmailVerified BOOLEAN DEFAULT FALSE,
       createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -22,9 +20,9 @@ export const createUserModel = async (db) => {
     CREATE TABLE IF NOT EXISTS student_profiles (
       id INT PRIMARY KEY AUTO_INCREMENT,
       userId INT NOT NULL UNIQUE,
-      college VARCHAR(255) NOT NULL,
-      course VARCHAR(255) NOT NULL,
-      graduationYear INT NOT NULL,
+      college VARCHAR(255) NULL,
+      course VARCHAR(255) NULL,
+      graduationYear INT NULL,
       FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
     )
   `);
@@ -33,7 +31,7 @@ export const createUserModel = async (db) => {
     CREATE TABLE IF NOT EXISTS employer_profiles (
       id INT PRIMARY KEY AUTO_INCREMENT,
       userId INT NOT NULL UNIQUE,
-      companyName VARCHAR(255) NOT NULL,
+      companyName VARCHAR(255) NULL,
       FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
     )
   `);

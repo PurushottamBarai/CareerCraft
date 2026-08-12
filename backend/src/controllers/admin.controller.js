@@ -24,7 +24,7 @@ export const getStudents = async (req, res) => {
        FROM users u 
        INNER JOIN student_profiles s ON u.id = s.userId
        WHERE u.role = 'student' 
-       ORDER BY u.createdAt DESC`,
+       ORDER BY u.createdAt DESC`
     );
     res.json(rows);
   } catch (error) {
@@ -40,7 +40,7 @@ export const getEmployers = async (req, res) => {
        FROM users u 
        INNER JOIN employer_profiles e ON u.id = e.userId
        WHERE u.role = 'employer' 
-       ORDER BY u.createdAt DESC`,
+       ORDER BY u.createdAt DESC`
     );
     res.json(rows);
   } catch (error) {
@@ -56,23 +56,13 @@ export const getJobs = async (req, res) => {
        FROM jobs j
        INNER JOIN users u ON j.employerId = u.id
        INNER JOIN employer_profiles e ON u.id = e.userId
-       ORDER BY j.createdAt DESC`,
+       ORDER BY j.createdAt DESC`
     );
 
-    const processedJobs = rows.map((job) => {
-      let skills = [];
-      try {
-        if (typeof job.skills === "string") {
-          skills = JSON.parse(job.skills);
-        } else if (Array.isArray(job.skills)) {
-          skills = job.skills;
-        }
-      } catch (e) {
-        console.error(`Error parsing skills for job ${job.id}:`, e);
-        skills = [];
-      }
-      return { ...job, skills };
-    });
+    const processedJobs = rows.map((job) => ({
+      ...job,
+      skills: typeof job.skills === "string" ? JSON.parse(job.skills || "[]") : job.skills || [],
+    }));
 
     res.json(processedJobs);
   } catch (error) {
@@ -93,7 +83,7 @@ export const getApplications = async (req, res) => {
        INNER JOIN jobs j ON a.jobId = j.id
        INNER JOIN users e ON j.employerId = e.id
        INNER JOIN employer_profiles emp ON e.id = emp.userId
-       ORDER BY a.appliedDate DESC`,
+       ORDER BY a.appliedDate DESC`
     );
     res.json(rows);
   } catch (error) {
@@ -104,17 +94,15 @@ export const getApplications = async (req, res) => {
 
 export const getStats = async (req, res) => {
   try {
-    const [studentCount] = await db.query("SELECT COUNT(*) as count FROM users WHERE role = 'student'");
-    const [employerCount] = await db.query("SELECT COUNT(*) as count FROM users WHERE role = 'employer'");
-    const [jobCount] = await db.query("SELECT COUNT(*) as count FROM jobs");
-    const [applicationCount] = await db.query("SELECT COUNT(*) as count FROM applications");
+    const [[stats]] = await db.query(`
+      SELECT 
+        (SELECT COUNT(*) FROM users WHERE role = 'student') as totalStudents,
+        (SELECT COUNT(*) FROM users WHERE role = 'employer') as totalEmployers,
+        (SELECT COUNT(*) FROM jobs) as totalJobs,
+        (SELECT COUNT(*) FROM applications) as totalApplications
+    `);
 
-    res.json({
-      totalStudents: studentCount[0].count,
-      totalEmployers: employerCount[0].count,
-      totalJobs: jobCount[0].count,
-      totalApplications: applicationCount[0].count,
-    });
+    res.json(stats);
   } catch (error) {
     console.error("Admin stats fetch error:", error);
     res.status(500).json({ message: "Failed to fetch statistics" });
