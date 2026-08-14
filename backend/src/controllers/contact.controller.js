@@ -2,10 +2,12 @@ import { db } from "../db/database.js";
 
 export const validateContact = async (req, res) => {
   try {
-    const { email, phone, feedback } = req.body;
+    const { email } = req.body;
 
-    const [rows] = await db.query("SELECT id FROM users WHERE email = ?", [email]);
-    if (rows.length === 0) {
+    const [stuRows] = await db.query("SELECT id FROM students WHERE email = ?", [email]);
+    const [compRows] = await db.query("SELECT id FROM companies WHERE email = ?", [email]);
+
+    if (stuRows.length === 0 && compRows.length === 0) {
       return res.status(404).json({ message: "Email must be registered with an account." });
     }
 

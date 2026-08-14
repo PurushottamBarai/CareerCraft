@@ -251,7 +251,6 @@ const Institute = () => {
               <thead>
                 <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', fontSize: '0.85rem', color: '#475569', textTransform: 'uppercase' }}>
                   <th style={{ padding: '0.85rem 1rem' }}>ID</th>
-                  <th style={{ padding: '0.85rem 1rem' }}>Contact Name</th>
                   <th style={{ padding: '0.85rem 1rem' }}>Company</th>
                   <th style={{ padding: '0.85rem 1rem' }}>Email</th>
                   <th style={{ padding: '0.85rem 1rem' }}>Phone</th>
@@ -259,13 +258,12 @@ const Institute = () => {
               </thead>
               <tbody>
                 {filteredEmployers.length === 0 ? (
-                  <tr><td colSpan="5" style={{ padding: '2.5rem', textAlign: 'center', color: '#64748b' }}>No employer records found</td></tr>
+                  <tr><td colSpan="4" style={{ padding: '2.5rem', textAlign: 'center', color: '#64748b' }}>No employer records found</td></tr>
                 ) : (
                   filteredEmployers.map(emp => (
                     <tr key={emp.id} style={{ borderBottom: '1px solid #f1f5f9', fontSize: '0.95rem' }}>
                       <td style={{ padding: '1rem' }}>#{emp.id}</td>
-                      <td style={{ padding: '1rem' }}><strong>{emp.firstName} {emp.lastName}</strong></td>
-                      <td style={{ padding: '1rem' }}>{emp.companyName || '-'}</td>
+                      <td style={{ padding: '1rem' }}><strong>{emp.companyName || emp.name || '-'}</strong></td>
                       <td style={{ padding: '1rem' }}>{emp.email}</td>
                       <td style={{ padding: '1rem' }}>{emp.phone || '-'}</td>
                     </tr>

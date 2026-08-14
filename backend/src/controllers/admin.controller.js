@@ -2,15 +2,13 @@ import { db } from "../db/database.js";
 
 export const getUsers = async (req, res) => {
   try {
-    const [rows] = await db.query(
-      `SELECT u.id, u.firstName, u.lastName, u.username, u.email, u.role, u.phone, u.address, u.createdAt,
-              e.companyName, s.college, s.course, s.graduationYear
-       FROM users u
-       LEFT JOIN student_profiles s ON u.id = s.userId
-       LEFT JOIN employer_profiles e ON u.id = e.userId
-       ORDER BY u.createdAt DESC`
+    const [students] = await db.query(
+      "SELECT id, name, email, phone, address, college, course, graduationYear, registrationDate, 'student' as role FROM students",
     );
-    res.json(rows);
+    const [companies] = await db.query(
+      "SELECT id, name, email, phone, officeAddress as address, NULL as college, NULL as course, NULL as graduationYear, registrationDate, 'employer' as role FROM companies",
+    );
+    res.json([...students, ...companies]);
   } catch (error) {
     console.error("Admin users fetch error:", error);
     res.status(500).json({ message: "Failed to fetch users" });
@@ -20,11 +18,7 @@ export const getUsers = async (req, res) => {
 export const getStudents = async (req, res) => {
   try {
     const [rows] = await db.query(
-      `SELECT u.id, u.firstName, u.lastName, u.username, u.email, s.college, s.course, s.graduationYear, u.phone, u.address, u.createdAt 
-       FROM users u 
-       INNER JOIN student_profiles s ON u.id = s.userId
-       WHERE u.role = 'student' 
-       ORDER BY u.createdAt DESC`
+      "SELECT id, name, name as firstName, email, phone, address, college, course, graduationYear, registrationDate FROM students ORDER BY id DESC",
     );
     res.json(rows);
   } catch (error) {
@@ -36,11 +30,7 @@ export const getStudents = async (req, res) => {
 export const getEmployers = async (req, res) => {
   try {
     const [rows] = await db.query(
-      `SELECT u.id, u.firstName, u.lastName, u.username, u.email, e.companyName, u.phone, u.address, u.createdAt 
-       FROM users u 
-       INNER JOIN employer_profiles e ON u.id = e.userId
-       WHERE u.role = 'employer' 
-       ORDER BY u.createdAt DESC`
+      "SELECT id, name, name as firstName, name as companyName, email, phone, officeAddress, registrationDate FROM companies ORDER BY id DESC",
     );
     res.json(rows);
   } catch (error) {
@@ -52,16 +42,15 @@ export const getEmployers = async (req, res) => {
 export const getJobs = async (req, res) => {
   try {
     const [rows] = await db.query(
-      `SELECT j.*, u.firstName as employerFirstName, u.lastName as employerLastName, e.companyName
-       FROM jobs j
-       INNER JOIN users u ON j.employerId = u.id
-       INNER JOIN employer_profiles e ON u.id = e.userId
-       ORDER BY j.createdAt DESC`
+      "SELECT id, companyId, jobTitle, company, location, skillsRequired, salary, active, createdAt FROM jobs ORDER BY id DESC",
     );
 
     const processedJobs = rows.map((job) => ({
       ...job,
-      skills: typeof job.skills === "string" ? JSON.parse(job.skills || "[]") : job.skills || [],
+      title: job.jobTitle,
+      companyName: job.company,
+      skills: typeof job.skillsRequired === "string" ? JSON.parse(job.skillsRequired || "[]") : job.skillsRequired || [],
+      skillsRequired: typeof job.skillsRequired === "string" ? JSON.parse(job.skillsRequired || "[]") : job.skillsRequired || [],
     }));
 
     res.json(processedJobs);
@@ -74,16 +63,13 @@ export const getJobs = async (req, res) => {
 export const getApplications = async (req, res) => {
   try {
     const [rows] = await db.query(
-      `SELECT a.*, 
-              s.firstName as studentFirstName, s.lastName as studentLastName,
-              j.title as jobTitle,
-              e.firstName as employerFirstName, e.lastName as employerLastName, emp.companyName
+      `SELECT a.id, a.jobId, a.studentId, a.status, a.appliedDate, a.resumePath, a.coverLetter,
+              s.name as studentName, s.name as studentFirstName,
+              j.jobTitle, j.jobTitle as title, j.company, j.company as companyName
        FROM applications a
-       INNER JOIN users s ON a.studentId = s.id
+       INNER JOIN students s ON a.studentId = s.id
        INNER JOIN jobs j ON a.jobId = j.id
-       INNER JOIN users e ON j.employerId = e.id
-       INNER JOIN employer_profiles emp ON e.id = emp.userId
-       ORDER BY a.appliedDate DESC`
+       ORDER BY a.id DESC`,
     );
     res.json(rows);
   } catch (error) {
@@ -96,8 +82,8 @@ export const getStats = async (req, res) => {
   try {
     const [[stats]] = await db.query(`
       SELECT 
-        (SELECT COUNT(*) FROM users WHERE role = 'student') as totalStudents,
-        (SELECT COUNT(*) FROM users WHERE role = 'employer') as totalEmployers,
+        (SELECT COUNT(*) FROM students) as totalStudents,
+        (SELECT COUNT(*) FROM companies) as totalEmployers,
         (SELECT COUNT(*) FROM jobs) as totalJobs,
         (SELECT COUNT(*) FROM applications) as totalApplications
     `);

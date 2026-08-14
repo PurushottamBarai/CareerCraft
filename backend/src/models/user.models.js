@@ -1,38 +1,30 @@
 export const createUserModel = async (db) => {
   await db.execute(`
-    CREATE TABLE IF NOT EXISTS users (
-      id INT PRIMARY KEY AUTO_INCREMENT,
-      firstName VARCHAR(100) NOT NULL,
-      lastName VARCHAR(100) NOT NULL DEFAULT '',
-      username VARCHAR(100) UNIQUE NOT NULL,
-      email VARCHAR(255) UNIQUE NOT NULL,
-      password VARCHAR(255) NOT NULL,
-      role ENUM('student', 'employer', 'admin') NOT NULL DEFAULT 'student',
-      phone VARCHAR(20) NULL,
-      address TEXT NULL,
-      isEmailVerified BOOLEAN DEFAULT FALSE,
-      createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    )
+    CREATE TABLE IF NOT EXISTS students (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      email VARCHAR(255) UNIQUE,
+      password VARCHAR(255),
+      phone VARCHAR(50),
+      address TEXT,
+      college VARCHAR(255),
+      course VARCHAR(255),
+      graduationYear VARCHAR(50),
+      registrationDate VARCHAR(50),
+      isEmailVerified BOOLEAN DEFAULT TRUE
+    ) ENGINE=InnoDB AUTO_INCREMENT=1000 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `);
 
   await db.execute(`
-    CREATE TABLE IF NOT EXISTS student_profiles (
-      id INT PRIMARY KEY AUTO_INCREMENT,
-      userId INT NOT NULL UNIQUE,
-      college VARCHAR(255) NULL,
-      course VARCHAR(255) NULL,
-      graduationYear INT NULL,
-      FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
-    )
-  `);
-
-  await db.execute(`
-    CREATE TABLE IF NOT EXISTS employer_profiles (
-      id INT PRIMARY KEY AUTO_INCREMENT,
-      userId INT NOT NULL UNIQUE,
-      companyName VARCHAR(255) NULL,
-      FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
-    )
+    CREATE TABLE IF NOT EXISTS companies (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(255) NOT NULL UNIQUE,
+      email VARCHAR(255) NOT NULL UNIQUE,
+      password VARCHAR(255),
+      phone VARCHAR(50) UNIQUE,
+      officeAddress TEXT,
+      registrationDate VARCHAR(50),
+      isEmailVerified BOOLEAN DEFAULT TRUE
+    ) ENGINE=InnoDB AUTO_INCREMENT=1000 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `);
 };

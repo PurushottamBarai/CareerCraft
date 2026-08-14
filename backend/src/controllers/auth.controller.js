@@ -2,123 +2,52 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { db } from "../db/database.js";
 import { sendEmail } from "../utils/email.util.js";
+import { getFormattedDateTime } from "../utils/date.util.js";
 
 const generateOtp = () => String(Math.floor(10000 + Math.random() * 90000));
 
-const fetchFullUserProfile = async (userId) => {
-  const [users] = await db.query(
-    `SELECT u.id, u.firstName, u.lastName, u.username, u.email, u.role, u.phone, u.address, u.profileImage, u.createdAt,
-            e.companyName, s.college, s.course, s.graduationYear
-     FROM users u
-     LEFT JOIN student_profiles s ON u.id = s.userId
-     LEFT JOIN employer_profiles e ON u.id = e.userId
-     WHERE u.id = ?`,
-    [userId],
-  );
-  return users[0] || null;
+const fetchUserProfile = async (userId, role) => {
+  if (role === "admin") {
+    return { id: userId, name: "Admin", firstName: "Admin", role: "admin" };
+  } else if (
+    role === "employer" ||
+    role === "company" ||
+    role === "recruiter"
+  ) {
+    const [rows] = await db.query(
+      "SELECT id, name, email, phone, officeAddress, registrationDate, 'employer' as role FROM companies WHERE id = ?",
+      [userId],
+    );
+    return rows[0] || null;
+  } else {
+    const [rows] = await db.query(
+      "SELECT id, name, email, phone, address, college, course, graduationYear, registrationDate, 'student' as role FROM students WHERE id = ?",
+      [userId],
+    );
+    return rows[0] || null;
+  }
 };
 
 const sendOtpEmail = async (email, otp, name) => {
   const emailHtml = `
     <div style="font-family: Arial, sans-serif; background-color: #f6f8fa; padding: 30px;">
-
-  <div style="max-width: 480px; margin: 0 auto; background: #fff; border: 1px solid #d0d7de; border-radius: 6px; padding: 24px;">
-
-    <h2 style="
-      color: #24292f;
-      text-align: center;
-      margin: 0 0 28px 0;
-      font-size: 20px;
-      font-weight: 600;
-    ">
-      CareerCraft
-    </h2>
-
-    <p style="
-      color: #24292f;
-      font-size: 14px;
-      margin: 0 0 24px 0;
-    ">
-      Please verify your email, <strong>${name}</strong>
-    </p>
-
-    <p style="
-      color: #24292f;
-      font-size: 13px;
-      margin: 0 0 18px 0;
-    ">
-      Here is your CareerCraft email verification code:
-    </p>
-
-    <div style="
-      text-align: center;
-      margin: 20px 0 22px 0;
-      font-size: 28px;
-      font-weight: bold;
-      letter-spacing: 4px;
-      color: #24292f;
-    ">
-      ${otp}
+      <div style="max-width: 480px; margin: 0 auto; background: #fff; border: 1px solid #d0d7de; border-radius: 6px; padding: 24px;">
+        <h2 style="color: #24292f; text-align: center;">CareerCraft</h2>
+        <p>Please verify your email, <strong>${name}</strong></p>
+        <p>Your email verification code is:</p>
+        <div style="text-align: center; margin: 20px 0; font-size: 28px; font-weight: bold; letter-spacing: 4px;">${otp}</div>
+        <p style="font-size: 13px; color: #57606a;">This code is valid for 10 minutes and can only be used once.</p>
+      </div>
     </div>
-
-    <p style="
-      color: #24292f;
-      font-size: 13px;
-      line-height: 1.5;
-      margin: 0 0 8px 0;
-    ">
-      This code is valid for <strong>10 minutes</strong> and can only be used once.
-    </p>
-
-    <p style="
-      color: #24292f;
-      font-size: 13px;
-      line-height: 1.5;
-      margin: 0 0 18px 0;
-    ">
-      <strong>Please don't share this code with anyone:</strong> we'll never ask for it on
-      the phone or via email.
-    </p>
-
-    <p style="
-      color: #24292f;
-      font-size: 13px;
-      line-height: 1.5;
-      margin: 0 0 8px 0;
-    ">
-      Thanks,
-    </p>
-
-    <p style="
-      color: #24292f;
-      font-size: 13px;
-      line-height: 1.5;
-      margin: 0;
-    ">
-      The CareerCraft Team
-    </p>
-
-    <div style="
-      color: #57606a;
-      font-size: 16px;
-      font-weight: bold;
-      letter-spacing: 1px;
-      margin-top: 4px;
-    ">
-      •••
-    </div>
-
-  </div>
-</div>
   `;
-  await sendEmail(email, "CareerCraft – Please verify your email", emailHtml);
+  await sendEmail(email, "CareerCraft – Email Verification Code", emailHtml);
 };
 
 export const register = async (req, res) => {
   try {
     const {
       firstName,
-      username,
+      name,
       email,
       password,
       role,
@@ -128,40 +57,48 @@ export const register = async (req, res) => {
       graduationYear,
       phone,
       address,
+      officeAddress,
     } = req.body;
 
-    const [existingUsers] = await db.query(
-      "SELECT id, isEmailVerified FROM users WHERE email = ?",
+    const userRole =
+      role === "employer" || role === "recruiter" || role === "company"
+        ? "employer"
+        : "student";
+    const displayName = name || firstName || companyName || "User";
+
+    // Check existing email in target table
+    const targetTable = userRole === "employer" ? "companies" : "students";
+    const [existing] = await db.query(
+      `SELECT id, isEmailVerified FROM ${targetTable} WHERE email = ?`,
       [email],
     );
-    if (existingUsers.length > 0) {
-      if (existingUsers[0].isEmailVerified) {
+    if (existing.length > 0) {
+      if (existing[0].isEmailVerified) {
         return res
           .status(400)
           .json({ message: "User with this email already exists" });
       } else {
-        await db.query("DELETE FROM users WHERE id = ?", [existingUsers[0].id]);
+        await db.query(`DELETE FROM ${targetTable} WHERE id = ?`, [
+          existing[0].id,
+        ]);
       }
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
-    const finalUsername =
-      username ||
-      `${email.split("@")[0]}_${Math.floor(Math.random() * 100000)}`;
-    const displayName = firstName || companyName || "User";
+    const regDate = getFormattedDateTime();
 
     const registrationPayload = {
-      firstName: displayName,
-      username: finalUsername,
+      name: displayName,
       email,
       password: hashedPassword,
-      role: role || "student",
+      role: userRole,
       phone: phone || null,
       address: address || null,
-      companyName: companyName || "",
-      college: college || "",
-      course: course || "",
-      graduationYear: graduationYear || 0,
+      officeAddress: officeAddress || address || null,
+      college: college || null,
+      course: course || null,
+      graduationYear: graduationYear || null,
+      registrationDate: regDate,
     };
 
     const otp = generateOtp();
@@ -172,7 +109,7 @@ export const register = async (req, res) => {
       { expiresIn: "10m" },
     );
 
-    console.log(`[OTP] Generated for pending registration ${email}: ${otp}`);
+    console.log(`[OTP] Generated for ${email}: ${otp}`);
     await sendOtpEmail(email, otp, displayName);
 
     res.status(201).json({
@@ -199,19 +136,9 @@ export const sendOtp = async (req, res) => {
     if (verificationToken) {
       try {
         const decoded = jwt.verify(verificationToken, process.env.JWT_SECRET);
-        displayName = decoded.payload?.firstName || "User";
+        displayName = decoded.payload?.name || "User";
         payload = decoded.payload;
       } catch (e) {}
-    }
-
-    if (!payload) {
-      const [users] = await db.query(
-        "SELECT id, firstName FROM users WHERE email = ?",
-        [email],
-      );
-      if (users.length > 0) {
-        displayName = users[0].firstName || "User";
-      }
     }
 
     const otp = generateOtp();
@@ -222,9 +149,7 @@ export const sendOtp = async (req, res) => {
       { expiresIn: "10m" },
     );
 
-    console.log(`[OTP] Resent for ${email}: ${otp}`);
     await sendOtpEmail(email, otp, displayName);
-
     res.json({
       message: "OTP sent successfully",
       verificationToken: newVerificationToken,
@@ -240,22 +165,25 @@ export const verifyOtp = async (req, res) => {
     const { email, otp, verificationToken } = req.body;
     if (!email || !otp)
       return res.status(400).json({ message: "Email and OTP are required" });
-
     if (!verificationToken) {
-      return res.status(400).json({
-        message:
-          "Verification token missing or expired. Please request a new OTP.",
-      });
+      return res
+        .status(400)
+        .json({
+          message:
+            "Verification token missing or expired. Please request a new OTP.",
+        });
     }
 
     let decoded;
     try {
       decoded = jwt.verify(verificationToken, process.env.JWT_SECRET);
     } catch (err) {
-      return res.status(400).json({
-        message:
-          "OTP has expired or token is invalid. Please request a new OTP.",
-      });
+      return res
+        .status(400)
+        .json({
+          message:
+            "OTP has expired or token is invalid. Please request a new OTP.",
+        });
     }
 
     if (decoded.email !== email) {
@@ -272,51 +200,30 @@ export const verifyOtp = async (req, res) => {
     }
 
     if (decoded.payload) {
-      const userData = decoded.payload;
-      const [existing] = await db.query(
-        "SELECT id FROM users WHERE email = ?",
-        [email],
-      );
+      const p = decoded.payload;
+      const regDate = p.registrationDate || getFormattedDateTime();
 
-      if (existing.length > 0) {
+      if (p.role === "employer") {
         await db.query(
-          "UPDATE users SET isEmailVerified = TRUE WHERE email = ?",
-          [email],
+          `INSERT INTO companies (name, email, password, phone, officeAddress, registrationDate, isEmailVerified)
+           VALUES (?, ?, ?, ?, ?, ?, TRUE)`,
+          [p.name, p.email, p.password, p.phone, p.officeAddress, regDate],
         );
-        return res.json({
-          message: "Email verified successfully! You can now login.",
-        });
-      }
-
-      const [result] = await db.query(
-        `INSERT INTO users (firstName, lastName, username, email, password, role, phone, address, isEmailVerified)
-         VALUES (?, '', ?, ?, ?, ?, ?, ?, TRUE)`,
-        [
-          userData.firstName,
-          userData.username,
-          userData.email,
-          userData.password,
-          userData.role,
-          userData.phone,
-          userData.address,
-        ],
-      );
-
-      const newUserId = result.insertId;
-      if (userData.role === "student") {
+      } else {
         await db.query(
-          "INSERT INTO student_profiles (userId, college, course, graduationYear) VALUES (?, ?, ?, ?)",
+          `INSERT INTO students (name, email, password, phone, address, college, course, graduationYear, registrationDate, isEmailVerified)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE)`,
           [
-            newUserId,
-            userData.college || "",
-            userData.course || "",
-            userData.graduationYear || 0,
+            p.name,
+            p.email,
+            p.password,
+            p.phone,
+            p.address,
+            p.college,
+            p.course,
+            p.graduationYear,
+            regDate,
           ],
-        );
-      } else if (userData.role === "employer") {
-        await db.query(
-          "INSERT INTO employer_profiles (userId, companyName) VALUES (?, ?)",
-          [newUserId, userData.companyName || ""],
         );
       }
 
@@ -326,13 +233,12 @@ export const verifyOtp = async (req, res) => {
       });
     }
 
-    await db.query("UPDATE users SET isEmailVerified = TRUE WHERE email = ?", [
-      email,
-    ]);
     res.json({ message: "Email verified successfully! You can now login." });
   } catch (err) {
     console.error("Verify OTP error:", err);
-    res.status(500).json({ message: "Verification failed" });
+    res
+      .status(500)
+      .json({ message: "Verification failed", error: err.message });
   }
 };
 
@@ -340,79 +246,69 @@ export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const [adminRows] = await db.query(
-      "SELECT * FROM admin WHERE username = ?",
-      [email],
-    );
-    if (adminRows.length > 0) {
-      const admin = adminRows[0];
-      const valid =
-        admin.password.startsWith("$2a$") || admin.password.startsWith("$2b$")
-          ? await bcrypt.compare(password, admin.password)
-          : password === admin.password;
-
-      if (!valid) {
-        return res.status(401).json({ message: "Invalid credentials" });
-      }
-
+    // Admin login verification using .env
+    if (
+      process.env.ADMIN_USERNAME &&
+      process.env.ADMIN_PASSWORD &&
+      email === process.env.ADMIN_USERNAME &&
+      password === process.env.ADMIN_PASSWORD
+    ) {
       const token = jwt.sign(
-        { id: admin.id, username: admin.username, role: "admin" },
+        { id: 9999, role: "admin" },
         process.env.JWT_SECRET,
         { expiresIn: "8h" },
       );
-
       return res.json({
-        user: {
-          username: admin.username,
-          firstName: "Admin",
-          lastName: "User",
-          role: "admin",
-        },
+        user: { id: 9999, name: process.env.ADMIN_USERNAME, firstName: process.env.ADMIN_USERNAME, role: "admin" },
         token,
       });
     }
 
-    const [rows] = await db.query(
-      `SELECT u.*, s.college, s.course, s.graduationYear, e.companyName 
-       FROM users u 
-       LEFT JOIN student_profiles s ON u.id = s.userId 
-       LEFT JOIN employer_profiles e ON u.id = e.userId 
-       WHERE u.email = ? OR u.username = ?`,
-      [email, email],
-    );
+    // Search in students
+    const [stuRows] = await db.query("SELECT * FROM students WHERE email = ?", [
+      email,
+    ]);
+    if (stuRows.length > 0) {
+      const student = stuRows[0];
+      const valid = await bcrypt.compare(password, student.password);
+      if (!valid)
+        return res.status(401).json({ message: "Invalid credentials" });
 
-    if (rows.length === 0) {
-      return res.status(400).json({ message: "User not found" });
+      const token = jwt.sign(
+        { id: student.id, role: "student", email: student.email },
+        process.env.JWT_SECRET,
+        { expiresIn: "8h" },
+      );
+      delete student.password;
+      student.firstName = student.name;
+      student.role = "student";
+      return res.json({ user: student, token });
     }
 
-    const user = rows[0];
-    const valid = await bcrypt.compare(password, user.password);
-    if (!valid) {
-      return res.status(401).json({ message: "Invalid credentials" });
+    // Search in companies
+    const [compRows] = await db.query(
+      "SELECT * FROM companies WHERE email = ?",
+      [email],
+    );
+    if (compRows.length > 0) {
+      const company = compRows[0];
+      const valid = await bcrypt.compare(password, company.password);
+      if (!valid)
+        return res.status(401).json({ message: "Invalid credentials" });
+
+      const token = jwt.sign(
+        { id: company.id, role: "employer", email: company.email },
+        process.env.JWT_SECRET,
+        { expiresIn: "8h" },
+      );
+      delete company.password;
+      company.firstName = company.name;
+      company.companyName = company.name;
+      company.role = "employer";
+      return res.json({ user: company, token });
     }
 
-    if (!user.isEmailVerified) {
-      return res.status(403).json({
-        message:
-          "Please verify your email first. Check your inbox for the OTP.",
-        unverified: true,
-        email: user.email,
-      });
-    }
-
-    await db.query(
-      "UPDATE users SET updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
-      [user.id],
-    );
-    const token = jwt.sign(
-      { id: user.id, role: user.role, email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: "8h" },
-    );
-
-    delete user.password;
-    delete user.emailVerificationToken;
-    res.json({ user, token });
+    return res.status(400).json({ message: "User not found" });
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ message: "Login failed", error: error.message });
@@ -421,10 +317,9 @@ export const login = async (req, res) => {
 
 export const getProfile = async (req, res) => {
   try {
-    const user = await fetchFullUserProfile(req.user.id);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    const user = await fetchUserProfile(req.user.id, req.user.role);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    user.firstName = user.name;
     res.json(user);
   } catch (error) {
     console.error("Error fetching profile:", error);
@@ -436,67 +331,41 @@ export const updateProfile = async (req, res) => {
   try {
     const {
       firstName,
-      lastName,
+      name,
       phone,
       address,
+      officeAddress,
       companyName,
       college,
       course,
       graduationYear,
     } = req.body;
     const userId = req.user.id;
+    const role = req.user.role;
+    const displayName = name || firstName || companyName;
 
-    let role = req.user.role;
-    if (!role) {
-      const [userRows] = await db.query("SELECT role FROM users WHERE id = ?", [
-        userId,
-      ]);
-      if (userRows.length > 0) {
-        role = userRows[0].role;
-      }
-    }
-
-    if (!firstName || !firstName.trim()) {
-      return res.status(400).json({ message: "First name is required" });
-    }
-
-    await db.query(
-      "UPDATE users SET firstName = ?, lastName = ?, phone = ?, address = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
-      [
-        firstName.trim(),
-        lastName ? lastName.trim() : "",
-        phone ? phone.trim() : null,
-        address ? address.trim() : null,
-        userId,
-      ],
-    );
-
-    if (role === "employer") {
+    if (role === "employer" || role === "company" || role === "recruiter") {
       await db.query(
-        `INSERT INTO employer_profiles (userId, companyName) 
-         VALUES (?, ?) 
-         ON DUPLICATE KEY UPDATE companyName = VALUES(companyName)`,
-        [userId, companyName ? companyName.trim() : ""],
+        "UPDATE companies SET name = ?, phone = ?, officeAddress = ? WHERE id = ?",
+        [displayName, phone || null, officeAddress || address || null, userId],
       );
-    } else if (role === "student") {
-      const parsedGradYear = graduationYear
-        ? parseInt(graduationYear, 10)
-        : null;
-      const validYear = isNaN(parsedGradYear) ? null : parsedGradYear;
+    } else {
       await db.query(
-        `INSERT INTO student_profiles (userId, college, course, graduationYear) 
-         VALUES (?, ?, ?, ?) 
-         ON DUPLICATE KEY UPDATE college = VALUES(college), course = VALUES(course), graduationYear = VALUES(graduationYear)`,
+        "UPDATE students SET name = ?, phone = ?, address = ?, college = ?, course = ?, graduationYear = ? WHERE id = ?",
         [
+          displayName,
+          phone || null,
+          address || null,
+          college || null,
+          course || null,
+          graduationYear || null,
           userId,
-          college ? college.trim() : "",
-          course ? course.trim() : "",
-          validYear,
         ],
       );
     }
 
-    const updatedUser = await fetchFullUserProfile(userId);
+    const updatedUser = await fetchUserProfile(userId, role);
+    if (updatedUser) updatedUser.firstName = updatedUser.name;
     res.json({ message: "Profile updated successfully", user: updatedUser });
   } catch (error) {
     console.error("Error updating profile:", error);
@@ -508,7 +377,13 @@ export const updateProfile = async (req, res) => {
 
 export const deleteProfile = async (req, res) => {
   try {
-    await db.query("DELETE FROM users WHERE id = ?", [req.user.id]);
+    const userId = req.user.id;
+    const role = req.user.role;
+    if (role === "employer" || role === "company") {
+      await db.query("DELETE FROM companies WHERE id = ?", [userId]);
+    } else {
+      await db.query("DELETE FROM students WHERE id = ?", [userId]);
+    }
     res.json({ message: "Profile deleted successfully" });
   } catch (error) {
     console.error("Error deleting profile:", error);

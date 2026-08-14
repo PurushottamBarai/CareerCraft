@@ -11,67 +11,57 @@ async function setupDatabase() {
     connection = await mysql.createConnection(dbConfig);
     console.log("Connected to database successfully!");
 
+    // 1. Students Table
     await connection.execute(`
-      CREATE TABLE IF NOT EXISTS users (
+      CREATE TABLE IF NOT EXISTS students (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        firstName VARCHAR(100) NOT NULL,
-        lastName VARCHAR(100) NOT NULL DEFAULT '',
-        username VARCHAR(100) UNIQUE NOT NULL,
-        email VARCHAR(255) UNIQUE NOT NULL,
-        password VARCHAR(255) NOT NULL,
-        role ENUM('student', 'employer', 'admin') NOT NULL DEFAULT 'student',
-        phone VARCHAR(20) NULL,
-        address TEXT NULL,
-        isEmailVerified BOOLEAN DEFAULT FALSE,
-        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        INDEX idx_email (email),
-        INDEX idx_username (username),
-        INDEX idx_role (role)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) UNIQUE,
+        password VARCHAR(255),
+        phone VARCHAR(50),
+        address TEXT,
+        college VARCHAR(255),
+        course VARCHAR(255),
+        graduationYear VARCHAR(50),
+        registrationDate VARCHAR(50),
+        isEmailVerified BOOLEAN DEFAULT TRUE,
+        INDEX idx_email (email)
+      ) ENGINE=InnoDB AUTO_INCREMENT=1000 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
+    // 2. Companies Table
     await connection.execute(`
-      CREATE TABLE IF NOT EXISTS student_profiles (
+      CREATE TABLE IF NOT EXISTS companies (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        userId INT NOT NULL UNIQUE,
-        college VARCHAR(255) NULL,
-        course VARCHAR(255) NULL,
-        graduationYear INT NULL,
-        FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        name VARCHAR(255) NOT NULL UNIQUE,
+        email VARCHAR(255) NOT NULL UNIQUE,
+        password VARCHAR(255),
+        phone VARCHAR(50) UNIQUE,
+        officeAddress TEXT,
+        registrationDate VARCHAR(50),
+        isEmailVerified BOOLEAN DEFAULT TRUE,
+        INDEX idx_email (email)
+      ) ENGINE=InnoDB AUTO_INCREMENT=1000 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
-    await connection.execute(`
-      CREATE TABLE IF NOT EXISTS employer_profiles (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        userId INT NOT NULL UNIQUE,
-        companyName VARCHAR(255) NULL,
-        FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-    `);
-
+    // 3. Jobs Table
     await connection.execute(`
       CREATE TABLE IF NOT EXISTS jobs (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        employerId INT NOT NULL,
-        title VARCHAR(255) NOT NULL,
-        description TEXT NOT NULL,
-        skills JSON NOT NULL,
-        experienceYears INT DEFAULT 0,
-        experienceMonths INT DEFAULT 0,
+        companyId INT NOT NULL,
+        jobTitle VARCHAR(255) NOT NULL,
+        company VARCHAR(255) NOT NULL,
         location VARCHAR(255) NOT NULL,
-        salary VARCHAR(100) NULL,
-        status ENUM('active', 'closed', 'draft') DEFAULT 'active',
-        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY (employerId) REFERENCES users(id) ON DELETE CASCADE,
-        INDEX idx_employer (employerId),
-        INDEX idx_status (status),
-        INDEX idx_created (createdAt)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        skillsRequired JSON NOT NULL,
+        salary VARCHAR(100) NOT NULL,
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        createdAt VARCHAR(50),
+        FOREIGN KEY (companyId) REFERENCES companies(id) ON DELETE CASCADE,
+        INDEX idx_company (companyId)
+      ) ENGINE=InnoDB AUTO_INCREMENT=1000 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
+    // 4. Applications Table
     await connection.execute(`
       CREATE TABLE IF NOT EXISTS applications (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -80,18 +70,16 @@ async function setupDatabase() {
         resumePath VARCHAR(500) NULL,
         coverLetter TEXT NULL,
         status ENUM('pending', 'accepted', 'rejected') DEFAULT 'pending',
-        appliedDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        statusUpdatedAt TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP,
+        appliedDate VARCHAR(50),
         FOREIGN KEY (jobId) REFERENCES jobs(id) ON DELETE CASCADE,
-        FOREIGN KEY (studentId) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (studentId) REFERENCES students(id) ON DELETE CASCADE,
         UNIQUE KEY unique_application (jobId, studentId),
         INDEX idx_job (jobId),
-        INDEX idx_student (studentId),
-        INDEX idx_status (status)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        INDEX idx_student (studentId)
+      ) ENGINE=InnoDB AUTO_INCREMENT=1000 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
-    console.log("Database tables verified & ready!");
+    console.log("Database tables (students, companies, jobs, applications) verified & ready!");
   } catch (error) {
     console.error("Database setup failed:", error.message);
     process.exit(1);

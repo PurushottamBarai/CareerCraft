@@ -1,21 +1,22 @@
 import { db } from "../db/database.js";
+import { getFormattedDateTime } from "../utils/date.util.js";
 
 export const getJobApplications = async (req, res) => {
   try {
     const [applications] = await db.query(
       `SELECT a.*, 
-              s.firstName as studentFirstName, 
-              s.lastName as studentLastName,
+              s.name as studentName, 
+              s.name as studentFirstName,
               s.email as studentEmail,
               s.phone,
-              sp.college,
-              sp.course
+              s.college,
+              s.course,
+              s.graduationYear
        FROM applications a
-       INNER JOIN users s ON a.studentId = s.id
-       LEFT JOIN student_profiles sp ON s.id = sp.userId
+       INNER JOIN students s ON a.studentId = s.id
        INNER JOIN jobs j ON a.jobId = j.id
-       WHERE a.jobId = ? AND j.employerId = ?
-       ORDER BY a.appliedDate DESC`,
+       WHERE a.jobId = ? AND j.companyId = ?
+       ORDER BY a.id DESC`,
       [req.params.jobId, req.user.id],
     );
 
@@ -30,16 +31,14 @@ export const getStudentApplications = async (req, res) => {
   try {
     const [applications] = await db.query(
       `SELECT a.*, 
-              j.title as jobTitle,
-              u.firstName as employerFirstName,
-              u.lastName as employerLastName,
-              e.companyName
+              j.jobTitle,
+              j.jobTitle as title,
+              j.company,
+              j.company as companyName
        FROM applications a
        INNER JOIN jobs j ON a.jobId = j.id
-       INNER JOIN users u ON j.employerId = u.id
-       LEFT JOIN employer_profiles e ON u.id = e.userId
        WHERE a.studentId = ?
-       ORDER BY a.appliedDate DESC`,
+       ORDER BY a.id DESC`,
       [req.user.id],
     );
 
@@ -53,6 +52,8 @@ export const getStudentApplications = async (req, res) => {
 export const submitApplication = async (req, res) => {
   try {
     const { jobId, coverLetter } = req.body;
+    if (!jobId) return res.status(400).json({ message: "Job ID is required" });
+
     const resumePath = req.file ? `/uploads/${req.file.filename}` : null;
 
     const [existing] = await db.query(
@@ -64,10 +65,12 @@ export const submitApplication = async (req, res) => {
       return res.status(400).json({ message: "You have already applied" });
     }
 
+    const appliedDate = getFormattedDateTime();
+
     const [result] = await db.query(
-      `INSERT INTO applications (jobId, studentId, resumePath, coverLetter)
-       VALUES (?, ?, ?, ?)`,
-      [jobId, req.user.id, resumePath, coverLetter || null],
+      `INSERT INTO applications (jobId, studentId, resumePath, coverLetter, appliedDate)
+       VALUES (?, ?, ?, ?, ?)`,
+      [jobId, req.user.id, resumePath, coverLetter || null, appliedDate],
     );
 
     res.status(201).json({ message: "Application submitted successfully", applicationId: result.insertId });
@@ -83,7 +86,7 @@ export const updateApplicationStatus = async (req, res) => {
     const applicationId = req.params.id;
 
     const [applications] = await db.query(
-      `SELECT a.*, j.employerId 
+      `SELECT a.*, j.companyId 
        FROM applications a
        INNER JOIN jobs j ON a.jobId = j.id
        WHERE a.id = ?`,
@@ -94,12 +97,12 @@ export const updateApplicationStatus = async (req, res) => {
       return res.status(404).json({ message: "Application not found" });
     }
 
-    if (applications[0].employerId !== req.user.id) {
+    if (applications[0].companyId !== req.user.id) {
       return res.status(403).json({ message: "Access denied" });
     }
 
     await db.query(
-      "UPDATE applications SET status = ?, statusUpdatedAt = CURRENT_TIMESTAMP WHERE id = ?",
+      "UPDATE applications SET status = ? WHERE id = ?",
       [status, applicationId],
     );
 

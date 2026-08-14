@@ -1,11 +1,12 @@
 import { db } from "../db/database.js";
+import { getFormattedDateTime } from "../utils/date.util.js";
 
 const parseSkills = (skills) => {
   if (typeof skills === "string") {
     try {
       return JSON.parse(skills);
     } catch (e) {
-      return [];
+      return [skills];
     }
   }
   return Array.isArray(skills) ? skills : [];
@@ -17,13 +18,20 @@ export const getEmployerJobs = async (req, res) => {
       `SELECT j.*, COUNT(DISTINCT a.id) as applicationCount
        FROM jobs j
        LEFT JOIN applications a ON j.id = a.jobId
-       WHERE j.employerId = ?
+       WHERE j.companyId = ?
        GROUP BY j.id
-       ORDER BY j.createdAt DESC`,
+       ORDER BY j.id DESC`,
       [req.user.id],
     );
 
-    res.json(jobs.map((job) => ({ ...job, skills: parseSkills(job.skills) })));
+    res.json(
+      jobs.map((job) => ({
+        ...job,
+        title: job.jobTitle,
+        skills: parseSkills(job.skillsRequired),
+        skillsRequired: parseSkills(job.skillsRequired),
+      })),
+    );
   } catch (error) {
     console.error("Error fetching employer jobs:", error);
     res.status(500).json({ message: "Failed to fetch jobs" });
@@ -32,25 +40,27 @@ export const getEmployerJobs = async (req, res) => {
 
 export const getJobs = async (req, res) => {
   try {
+    const userId = req.user ? req.user.id : null;
     const [jobs] = await db.query(
       `SELECT j.*, 
-              u.firstName as employerFirstName, 
-              u.lastName as employerLastName,
-              e.companyName,
+              c.name as companyName,
               CASE WHEN a.id IS NOT NULL THEN TRUE ELSE FALSE END as hasApplied
        FROM jobs j
-       INNER JOIN users u ON j.employerId = u.id
-       LEFT JOIN employer_profiles e ON u.id = e.userId
+       INNER JOIN companies c ON j.companyId = c.id
        LEFT JOIN applications a ON j.id = a.jobId AND a.studentId = ?
-       ORDER BY j.createdAt DESC`,
-      [req.user.id],
+       WHERE j.active = TRUE
+       ORDER BY j.id DESC`,
+      [userId],
     );
 
     res.json(
       jobs.map((job) => ({
         ...job,
+        title: job.jobTitle,
+        company: job.company || job.companyName,
         hasApplied: !!job.hasApplied,
-        skills: parseSkills(job.skills),
+        skills: parseSkills(job.skillsRequired),
+        skillsRequired: parseSkills(job.skillsRequired),
       })),
     );
   } catch (error) {
@@ -61,12 +71,32 @@ export const getJobs = async (req, res) => {
 
 export const createJob = async (req, res) => {
   try {
-    const { title, description, skills, experienceYears, experienceMonths, location, salary } = req.body;
+    const { jobTitle, title, company, location, skillsRequired, skills, salary, active } = req.body;
+    const finalTitle = jobTitle || title;
+    const finalSkills = skillsRequired || skills || [];
+
+    // Fetch company name if not passed
+    let companyName = company;
+    if (!companyName) {
+      const [compRows] = await db.query("SELECT name FROM companies WHERE id = ?", [req.user.id]);
+      companyName = compRows[0]?.name || "Company";
+    }
+
+    const regDate = getFormattedDateTime();
 
     const [result] = await db.query(
-      `INSERT INTO jobs (employerId, title, description, skills, experienceYears, experienceMonths, location, salary)
+      `INSERT INTO jobs (companyId, jobTitle, company, location, skillsRequired, salary, active, createdAt)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [req.user.id, title, description, JSON.stringify(skills), experienceYears || 0, experienceMonths || 0, location, salary || null],
+      [
+        req.user.id,
+        finalTitle,
+        companyName,
+        location,
+        JSON.stringify(Array.isArray(finalSkills) ? finalSkills : [finalSkills]),
+        salary || "Not Disclosed",
+        active !== undefined ? active : true,
+        regDate,
+      ],
     );
 
     res.status(201).json({ message: "Job posted successfully", jobId: result.insertId });
@@ -79,7 +109,7 @@ export const createJob = async (req, res) => {
 export const deleteJob = async (req, res) => {
   try {
     const [result] = await db.query(
-      "DELETE FROM jobs WHERE id = ? AND employerId = ?",
+      "DELETE FROM jobs WHERE id = ? AND companyId = ?",
       [req.params.id, req.user.id],
     );
 
