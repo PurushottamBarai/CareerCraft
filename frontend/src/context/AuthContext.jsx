@@ -12,19 +12,18 @@ const API_BASE = (() => {
 })();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
-
-  useEffect(() => {
+  const [token, setToken] = useState(() => localStorage.getItem('token') || null);
+  const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem('user');
-    const savedToken = localStorage.getItem('token');
-    if (savedUser && savedToken) {
+    if (savedUser) {
       try {
-        setUser(JSON.parse(savedUser));
-        setToken(savedToken);
-      } catch(e) {}
+        return JSON.parse(savedUser);
+      } catch (e) {
+        return null;
+      }
     }
-  }, []);
+    return null;
+  });
 
   const login = async (email, password) => {
     try {

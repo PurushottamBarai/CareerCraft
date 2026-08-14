@@ -21,29 +21,133 @@ const fetchFullUserProfile = async (userId) => {
 const sendOtpEmail = async (email, otp, name) => {
   const emailHtml = `
     <div style="font-family: Arial, sans-serif; background-color: #f6f8fa; padding: 30px;">
-      <div style="max-width: 480px; margin: 0 auto; background: #fff; border: 1px solid #d0d7de; border-radius: 6px; padding: 24px;">
-        <h2 style="color: #24292f; text-align: center;">CareerCraft</h2>
-        <p>Please verify your email, <strong>${name}</strong></p>
-        <p>Your email verification code is:</p>
-        <div style="text-align: center; margin: 20px 0; font-size: 28px; font-weight: bold; letter-spacing: 4px;">${otp}</div>
-        <p style="font-size: 13px; color: #57606a;">This code is valid for 10 minutes and can only be used once.</p>
-      </div>
+
+  <div style="max-width: 480px; margin: 0 auto; background: #fff; border: 1px solid #d0d7de; border-radius: 6px; padding: 24px;">
+
+    <h2 style="
+      color: #24292f;
+      text-align: center;
+      margin: 0 0 28px 0;
+      font-size: 20px;
+      font-weight: 600;
+    ">
+      CareerCraft
+    </h2>
+
+    <p style="
+      color: #24292f;
+      font-size: 14px;
+      margin: 0 0 24px 0;
+    ">
+      Please verify your email, <strong>${name}</strong>
+    </p>
+
+    <p style="
+      color: #24292f;
+      font-size: 13px;
+      margin: 0 0 18px 0;
+    ">
+      Here is your CareerCraft email verification code:
+    </p>
+
+    <div style="
+      text-align: center;
+      margin: 20px 0 22px 0;
+      font-size: 28px;
+      font-weight: bold;
+      letter-spacing: 4px;
+      color: #24292f;
+    ">
+      ${otp}
     </div>
+
+    <p style="
+      color: #24292f;
+      font-size: 13px;
+      line-height: 1.5;
+      margin: 0 0 8px 0;
+    ">
+      This code is valid for <strong>10 minutes</strong> and can only be used once.
+    </p>
+
+    <p style="
+      color: #24292f;
+      font-size: 13px;
+      line-height: 1.5;
+      margin: 0 0 18px 0;
+    ">
+      <strong>Please don't share this code with anyone:</strong> we'll never ask for it on
+      the phone or via email.
+    </p>
+
+    <p style="
+      color: #24292f;
+      font-size: 13px;
+      line-height: 1.5;
+      margin: 0 0 8px 0;
+    ">
+      Thanks,
+    </p>
+
+    <p style="
+      color: #24292f;
+      font-size: 13px;
+      line-height: 1.5;
+      margin: 0;
+    ">
+      The CareerCraft Team
+    </p>
+
+    <div style="
+      color: #57606a;
+      font-size: 16px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      margin-top: 4px;
+    ">
+      •••
+    </div>
+
+  </div>
+</div>
   `;
-  await sendEmail(email, "CareerCraft – Email Verification Code", emailHtml);
+  await sendEmail(email, "CareerCraft – Please verify your email", emailHtml);
 };
 
 export const register = async (req, res) => {
   try {
-    const { firstName, username, email, password, role, companyName, college, course, graduationYear, phone, address } = req.body;
+    const {
+      firstName,
+      username,
+      email,
+      password,
+      role,
+      companyName,
+      college,
+      course,
+      graduationYear,
+      phone,
+      address,
+    } = req.body;
 
-    const [existingUsers] = await db.query("SELECT id FROM users WHERE email = ?", [email]);
+    const [existingUsers] = await db.query(
+      "SELECT id, isEmailVerified FROM users WHERE email = ?",
+      [email],
+    );
     if (existingUsers.length > 0) {
-      return res.status(400).json({ message: "User with this email already exists" });
+      if (existingUsers[0].isEmailVerified) {
+        return res
+          .status(400)
+          .json({ message: "User with this email already exists" });
+      } else {
+        await db.query("DELETE FROM users WHERE id = ?", [existingUsers[0].id]);
+      }
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
-    const finalUsername = username || `${email.split("@")[0]}_${Math.floor(Math.random() * 100000)}`;
+    const finalUsername =
+      username ||
+      `${email.split("@")[0]}_${Math.floor(Math.random() * 100000)}`;
     const displayName = firstName || companyName || "User";
 
     const registrationPayload = {
@@ -78,7 +182,9 @@ export const register = async (req, res) => {
     });
   } catch (err) {
     console.error("Registration error:", err);
-    res.status(500).json({ message: "Registration failed", error: err.message });
+    res
+      .status(500)
+      .json({ message: "Registration failed", error: err.message });
   }
 };
 
@@ -99,7 +205,10 @@ export const sendOtp = async (req, res) => {
     }
 
     if (!payload) {
-      const [users] = await db.query("SELECT id, firstName FROM users WHERE email = ?", [email]);
+      const [users] = await db.query(
+        "SELECT id, firstName FROM users WHERE email = ?",
+        [email],
+      );
       if (users.length > 0) {
         displayName = users[0].firstName || "User";
       }
@@ -116,7 +225,10 @@ export const sendOtp = async (req, res) => {
     console.log(`[OTP] Resent for ${email}: ${otp}`);
     await sendOtpEmail(email, otp, displayName);
 
-    res.json({ message: "OTP sent successfully", verificationToken: newVerificationToken });
+    res.json({
+      message: "OTP sent successfully",
+      verificationToken: newVerificationToken,
+    });
   } catch (err) {
     console.error("Send OTP error:", err);
     res.status(500).json({ message: "Failed to send OTP" });
@@ -126,59 +238,97 @@ export const sendOtp = async (req, res) => {
 export const verifyOtp = async (req, res) => {
   try {
     const { email, otp, verificationToken } = req.body;
-    if (!email || !otp) return res.status(400).json({ message: "Email and OTP are required" });
+    if (!email || !otp)
+      return res.status(400).json({ message: "Email and OTP are required" });
 
     if (!verificationToken) {
-      return res.status(400).json({ message: "Verification token missing or expired. Please request a new OTP." });
+      return res.status(400).json({
+        message:
+          "Verification token missing or expired. Please request a new OTP.",
+      });
     }
 
     let decoded;
     try {
       decoded = jwt.verify(verificationToken, process.env.JWT_SECRET);
     } catch (err) {
-      return res.status(400).json({ message: "OTP has expired or token is invalid. Please request a new OTP." });
+      return res.status(400).json({
+        message:
+          "OTP has expired or token is invalid. Please request a new OTP.",
+      });
     }
 
     if (decoded.email !== email) {
-      return res.status(400).json({ message: "Verification token does not match email." });
+      return res
+        .status(400)
+        .json({ message: "Verification token does not match email." });
     }
 
     const isMatch = await bcrypt.compare(String(otp), decoded.hashedOtp);
     if (!isMatch) {
-      return res.status(400).json({ message: "Incorrect OTP. Please try again." });
+      return res
+        .status(400)
+        .json({ message: "Incorrect OTP. Please try again." });
     }
 
     if (decoded.payload) {
       const userData = decoded.payload;
-      const [existing] = await db.query("SELECT id FROM users WHERE email = ?", [email]);
+      const [existing] = await db.query(
+        "SELECT id FROM users WHERE email = ?",
+        [email],
+      );
 
       if (existing.length > 0) {
-        await db.query("UPDATE users SET isEmailVerified = TRUE WHERE email = ?", [email]);
-        return res.json({ message: "Email verified successfully! You can now login." });
+        await db.query(
+          "UPDATE users SET isEmailVerified = TRUE WHERE email = ?",
+          [email],
+        );
+        return res.json({
+          message: "Email verified successfully! You can now login.",
+        });
       }
 
       const [result] = await db.query(
         `INSERT INTO users (firstName, lastName, username, email, password, role, phone, address, isEmailVerified)
          VALUES (?, '', ?, ?, ?, ?, ?, ?, TRUE)`,
-        [userData.firstName, userData.username, userData.email, userData.password, userData.role, userData.phone, userData.address],
+        [
+          userData.firstName,
+          userData.username,
+          userData.email,
+          userData.password,
+          userData.role,
+          userData.phone,
+          userData.address,
+        ],
       );
 
       const newUserId = result.insertId;
       if (userData.role === "student") {
-        await db.query("INSERT INTO student_profiles (userId, college, course, graduationYear) VALUES (?, ?, ?, ?)", [
-          newUserId,
-          userData.college || "",
-          userData.course || "",
-          userData.graduationYear || 0,
-        ]);
+        await db.query(
+          "INSERT INTO student_profiles (userId, college, course, graduationYear) VALUES (?, ?, ?, ?)",
+          [
+            newUserId,
+            userData.college || "",
+            userData.course || "",
+            userData.graduationYear || 0,
+          ],
+        );
       } else if (userData.role === "employer") {
-        await db.query("INSERT INTO employer_profiles (userId, companyName) VALUES (?, ?)", [newUserId, userData.companyName || ""]);
+        await db.query(
+          "INSERT INTO employer_profiles (userId, companyName) VALUES (?, ?)",
+          [newUserId, userData.companyName || ""],
+        );
       }
 
-      return res.json({ message: "Account registered and email verified successfully! You can now login." });
+      return res.json({
+        message:
+          "Account registered and email verified successfully! You can now login.",
+      });
     }
 
-    await db.query("UPDATE users SET isEmailVerified = TRUE WHERE email = ?", [email]);
+    await db.query("UPDATE users SET isEmailVerified = TRUE WHERE email = ?", [
+      email,
+    ]);
     res.json({ message: "Email verified successfully! You can now login." });
   } catch (err) {
     console.error("Verify OTP error:", err);
@@ -190,12 +340,16 @@ export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const [adminRows] = await db.query("SELECT * FROM admin WHERE username = ?", [email]);
+    const [adminRows] = await db.query(
+      "SELECT * FROM admin WHERE username = ?",
+      [email],
+    );
     if (adminRows.length > 0) {
       const admin = adminRows[0];
-      const valid = admin.password.startsWith("$2a$") || admin.password.startsWith("$2b$")
-        ? await bcrypt.compare(password, admin.password)
-        : password === admin.password;
+      const valid =
+        admin.password.startsWith("$2a$") || admin.password.startsWith("$2b$")
+          ? await bcrypt.compare(password, admin.password)
+          : password === admin.password;
 
       if (!valid) {
         return res.status(401).json({ message: "Invalid credentials" });
@@ -208,7 +362,12 @@ export const login = async (req, res) => {
       );
 
       return res.json({
-        user: { username: admin.username, firstName: "Admin", lastName: "User", role: "admin" },
+        user: {
+          username: admin.username,
+          firstName: "Admin",
+          lastName: "User",
+          role: "admin",
+        },
         token,
       });
     }
@@ -234,13 +393,17 @@ export const login = async (req, res) => {
 
     if (!user.isEmailVerified) {
       return res.status(403).json({
-        message: "Please verify your email first. Check your inbox for the OTP.",
+        message:
+          "Please verify your email first. Check your inbox for the OTP.",
         unverified: true,
         email: user.email,
       });
     }
 
-    await db.query("UPDATE users SET updatedAt = CURRENT_TIMESTAMP WHERE id = ?", [user.id]);
+    await db.query(
+      "UPDATE users SET updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
+      [user.id],
+    );
     const token = jwt.sign(
       { id: user.id, role: user.role, email: user.email },
       process.env.JWT_SECRET,
@@ -271,9 +434,27 @@ export const getProfile = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-    const { firstName, lastName, phone, address, companyName, college, course, graduationYear } = req.body;
+    const {
+      firstName,
+      lastName,
+      phone,
+      address,
+      companyName,
+      college,
+      course,
+      graduationYear,
+    } = req.body;
     const userId = req.user.id;
-    const role = req.user.role;
+
+    let role = req.user.role;
+    if (!role) {
+      const [userRows] = await db.query("SELECT role FROM users WHERE id = ?", [
+        userId,
+      ]);
+      if (userRows.length > 0) {
+        role = userRows[0].role;
+      }
+    }
 
     if (!firstName || !firstName.trim()) {
       return res.status(400).json({ message: "First name is required" });
@@ -281,20 +462,37 @@ export const updateProfile = async (req, res) => {
 
     await db.query(
       "UPDATE users SET firstName = ?, lastName = ?, phone = ?, address = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?",
-      [firstName.trim(), lastName ? lastName.trim() : "", phone ? phone.trim() : null, address ? address.trim() : null, userId],
+      [
+        firstName.trim(),
+        lastName ? lastName.trim() : "",
+        phone ? phone.trim() : null,
+        address ? address.trim() : null,
+        userId,
+      ],
     );
 
     if (role === "employer") {
       await db.query(
-        "INSERT INTO employer_profiles (userId, companyName) VALUES (?, ?) ON DUPLICATE KEY UPDATE companyName = ?",
-        [userId, companyName ? companyName.trim() : null, companyName ? companyName.trim() : null],
+        `INSERT INTO employer_profiles (userId, companyName) 
+         VALUES (?, ?) 
+         ON DUPLICATE KEY UPDATE companyName = VALUES(companyName)`,
+        [userId, companyName ? companyName.trim() : ""],
       );
     } else if (role === "student") {
-      const parsedGradYear = graduationYear ? parseInt(graduationYear, 10) : null;
+      const parsedGradYear = graduationYear
+        ? parseInt(graduationYear, 10)
+        : null;
       const validYear = isNaN(parsedGradYear) ? null : parsedGradYear;
       await db.query(
-        "INSERT INTO student_profiles (userId, college, course, graduationYear) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE college = ?, course = ?, graduationYear = ?",
-        [userId, college ? college.trim() : null, course ? course.trim() : null, validYear, college ? college.trim() : null, course ? course.trim() : null, validYear],
+        `INSERT INTO student_profiles (userId, college, course, graduationYear) 
+         VALUES (?, ?, ?, ?) 
+         ON DUPLICATE KEY UPDATE college = VALUES(college), course = VALUES(course), graduationYear = VALUES(graduationYear)`,
+        [
+          userId,
+          college ? college.trim() : "",
+          course ? course.trim() : "",
+          validYear,
+        ],
       );
     }
 
@@ -302,7 +500,9 @@ export const updateProfile = async (req, res) => {
     res.json({ message: "Profile updated successfully", user: updatedUser });
   } catch (error) {
     console.error("Error updating profile:", error);
-    res.status(500).json({ message: "Failed to update profile", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Failed to update profile", error: error.message });
   }
 };
 

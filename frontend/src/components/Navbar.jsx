@@ -68,7 +68,7 @@ const Navbar = () => {
 
           {!user ? (
             <div id="guestNavLinks" className="btn" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-              <Link to="/login" className="nav-btn login" style={{textDecoration: 'none'}}>Sign In</Link>
+              <Link to="/login" className="nav-btn login" onClick={() => setMobileMenuOpen(false)} style={{textDecoration: 'none'}}>Sign In</Link>
               <div className="register-menu" style={{ position: 'relative' }}>
                 <button 
                   type="button"
@@ -84,13 +84,13 @@ const Navbar = () => {
                   <div className="register-dropdown">
                     <Link 
                       to="/register?type=student" 
-                      onClick={() => setRegisterDropdownOpen(false)}
+                      onClick={() => { setRegisterDropdownOpen(false); setMobileMenuOpen(false); }}
                     >
                       Student
                     </Link>
                     <Link 
                       to="/register?type=recruiter" 
-                      onClick={() => setRegisterDropdownOpen(false)}
+                      onClick={() => { setRegisterDropdownOpen(false); setMobileMenuOpen(false); }}
                     >
                       Recruiter
                     </Link>
@@ -107,10 +107,10 @@ const Navbar = () => {
                 </button>
                 <div className="hover-dropdown" style={{ right: 0, left: 'auto', minWidth: '150px' }}>
                   <div className="dropdown-col">
-                    <Link to="/profile">Profile</Link>
-                    <Link to="/dashboard">Dashboard</Link>
+                    <Link to="/profile" onClick={() => setMobileMenuOpen(false)}>Profile</Link>
+                    <Link to="/dashboard" onClick={() => setMobileMenuOpen(false)}>Dashboard</Link>
                     <hr />
-                    <a href="#!" onClick={handleLogout}>Logout</a>
+                    <a href="#!" onClick={(e) => { setMobileMenuOpen(false); handleLogout(); }}>Logout</a>
                   </div>
                 </div>
               </div>

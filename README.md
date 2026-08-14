@@ -1,22 +1,39 @@
-# CareerCraft
+## CareerCraft
 
-CareerCraft is a modern career management and recruitment platform bridging the gap between students and employers.
-
-## Features
-
-- **Authentication & Security**: Role-based access (Student, Employer, Admin) with secure OTP email verification.
-- **Employer Portal**: Job posting creation, applicant management, and status updates.
-- **Student Portal**: Job browsing, application tracking, profile management, and interactive learning resources.
-- **Embedded Microservices**:
-  - **ResumeCraft**: AI-powered resume builder integrated via iframe.
-  - **QuizCraft**: AI-generated skill assessment quizzes integrated via iframe.
+### 1. Overview
+CareerCraft is a recruitment and career management platform connecting students with employers. It features job posting, candidate application management, OTP authentication, and integration with specialized microservices (ResumeCraft and QuizCraft).
 
 ---
 
-## Tech Stack
+### 2. User Roles & Permissions
 
-- **Frontend**: React (Vite), React Router DOM, CSS Modules / Standard CSS
+- **Student**: Browse active job listings, apply for positions, verify OTP email, manage profile, generate resume, take quizes.
+- **Employer**: Post jobs, review candidate applications, accept/reject candidates, track hiring metrics.
+- **Admin**: System-wide oversight for managing platform data, users, and overall analytics.
+
+---
+
+### 3. Core Modules
+
+#### 3.1 Authentication & Security
+- **Registration**: Collects profile details and sends email OTP before inserting user data into the database.
+- **OTP Verification**: Validates 5-digit OTP code before completing user registration and profile creation.
+- **Auth**: JWT-based session security.
+
+#### 3.2 Job & Application Engine
+- Employers can create, update, and close job postings.
+- Students can search listings and submit applications.
+- Status tracking: `pending` ➔ `accepted` / `rejected`.
+
+#### 3.3 Microservices Integration
+- **ResumeCraft**: Embedded iframe (`RESUME_SERVICE_URL`) for AI resume generation.
+- **QuizCraft**: Embedded iframe (`QUIZ_SERVICE_URL`) for AI skill assessments.
+
+---
+
+### 4. Technical Stack
+
+- **Frontend**: React (Vite), React Router, CSS Modules
 - **Backend**: Node.js, Express.js (MVC)
 - **Database**: MySQL
-- **Email Service**: Resend API
-- **Microservices**: ResumeCraft & QuizCraft
+- **Email Delivery**: Resend API

@@ -91,7 +91,6 @@ async function setupDatabase() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
-
     console.log("Database tables verified & ready!");
   } catch (error) {
     console.error("Database setup failed:", error.message);

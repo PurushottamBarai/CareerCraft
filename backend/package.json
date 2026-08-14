@@ -5,6 +5,7 @@
   "type": "module",
   "main": "src/index.js",
   "scripts": {
+    "build": "npm install --prefix ../frontend && npm run build --prefix ../frontend",
     "start": "node src/index.js",
     "dev": "node src/index.js",
     "setup-db": "node src/db/setup-database.js"

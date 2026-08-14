@@ -9,7 +9,7 @@ CareerCraft is a recruitment and career management platform connecting students 
 
 ### 2. User Roles & Permissions
 
-- **Student**: Browse active job listings, apply for positions, verify OTP email, manage profile, access ResumeCraft and QuizCraft.
+- **Student**: Browse active job listings, apply for positions, verify OTP email, manage profile, generate resume, take quizes.
 - **Employer**: Post jobs, review candidate applications, accept/reject candidates, track hiring metrics.
 - **Admin**: System-wide oversight for managing platform data, users, and overall analytics.
 
@@ -19,7 +19,7 @@ CareerCraft is a recruitment and career management platform connecting students 
 
 #### 3.1 Authentication & Security
 - **Registration**: Collects profile details and sends email OTP before inserting user data into the database.
-- **OTP Verification**: Validates 6-digit OTP code before completing user registration and profile creation.
+- **OTP Verification**: Validates 5-digit OTP code before completing user registration and profile creation.
 - **Auth**: JWT-based session security.
 
 #### 3.2 Job & Application Engine
