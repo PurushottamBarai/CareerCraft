@@ -9,7 +9,6 @@ import { runMigrations } from "./db/migrations.js";
 
 import { createUserModel } from "./models/user.models.js";
 import { createJobModel } from "./models/job.models.js";
-import { createAdminModel } from "./models/admin.models.js";
 
 import authRoutes from "./routes/auth.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
@@ -31,12 +30,6 @@ async function setupTables() {
     console.log("Database tables created/verified");
   } catch (error) {
     console.error("Database setup error:", error);
-  }
-
-  try {
-    await createAdminModel(db);
-  } catch (error) {
-    console.error("Admin table setup error:", error);
   }
 }
 

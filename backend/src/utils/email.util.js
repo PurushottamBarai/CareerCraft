@@ -10,7 +10,7 @@ if (resendClient) {
   console.warn("Resend api key issue.");
 }
 
-export const sendEmail = async (to, subject, html) => {
+export const sendEmail = async (to, subject, html, replyTo = null) => {
   if (!resendClient) {
     console.warn("Email engine issue.");
     return;
@@ -19,12 +19,18 @@ export const sendEmail = async (to, subject, html) => {
   const fromEmail = `"CareerCraft" <${process.env.EMAIL_FROM}>`;
 
   try {
-    const { data, error } = await resendClient.emails.send({
+    const payload = {
       from: fromEmail,
       to: [to],
       subject,
       html,
-    });
+    };
+
+    if (replyTo) {
+      payload.reply_to = replyTo;
+    }
+
+    const { data, error } = await resendClient.emails.send(payload);
 
     if (error) {
       throw new Error(error.message);

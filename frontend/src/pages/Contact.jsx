@@ -42,69 +42,76 @@ const Contact = () => {
   };
 
   return (
-    <div className="contact-wrapper">
-      <div className="contact-left">
-        <h1 className="contact-heading">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-          </svg>
-          Get in Touch
-        </h1>
-        <p className="contact-info-text">
-          Have questions about CareerCraft, need help with your resume, or want to partner with us? Fill out the form and our team will get back to you shortly.
-        </p>
+    <div className="contact-page">
+      <div className="contact-header">
+        <h1>Contact Us</h1>
+        <p>Have a question or feedback? Send us a message below.</p>
       </div>
 
-      <div className="contact-right">
-        <div className="contact-form-box">
-          <h2>Send Us a Message</h2>
+      <div className="contact-card">
+        {status.success && <div className="contact-alert success">{status.success}</div>}
+        {status.error && <div className="contact-alert error">{status.error}</div>}
 
-          {status.success && <div style={{ color: '#16a34a', marginBottom: '1rem', fontWeight: 600 }}>{status.success}</div>}
-          {status.error && <div style={{ color: '#dc2626', marginBottom: '1rem', fontWeight: 600 }}>{status.error}</div>}
+        <form onSubmit={handleSubmit} className="contact-form">
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="name">Full Name</label>
+              <input
+                id="name"
+                type="text"
+                name="name"
+                placeholder="Enter your name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
-          <form className="contact-form" onSubmit={handleSubmit}>
-            <input 
-              type="text" 
-              name="name"
-              className="contact-input" 
-              placeholder="Your Full Name" 
-              value={formData.name}
-              onChange={handleChange}
-              required
-            />
-            <input 
-              type="email" 
-              name="email"
-              className="contact-input" 
-              placeholder="Your Email Address" 
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
-            <select 
+            <div className="form-group">
+              <label htmlFor="email">Email Address</label>
+              <input
+                id="email"
+                type="email"
+                name="email"
+                placeholder="Enter your email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="userType">I am a</label>
+            <select
+              id="userType"
               name="userType"
-              className="contact-input contact-select"
               value={formData.userType}
               onChange={handleChange}
             >
-              <option value="Student">I am a Student / Job Seeker</option>
-              <option value="Employer">I am an Employer / Recruiter</option>
-              <option value="Institute">I represent an Educational Institute</option>
+              <option value="Student">Student / Job Seeker</option>
+              <option value="Employer">Employer / Recruiter</option>
+              <option value="Institute">Educational Institute</option>
             </select>
-            <textarea 
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="message">Message</label>
+            <textarea
+              id="message"
               name="message"
-              className="contact-input contact-textarea" 
+              rows="5"
               placeholder="Write your message here..."
-              rows="4"
               value={formData.message}
               onChange={handleChange}
               required
             ></textarea>
-            <button type="submit" className="contact-submit-btn" disabled={status.loading}>
-              {status.loading ? 'Sending...' : 'Submit Message'}
-            </button>
-          </form>
-        </div>
+          </div>
+
+          <button type="submit" className="submit-btn" disabled={status.loading}>
+            {status.loading ? 'Sending...' : 'Submit Message'}
+          </button>
+        </form>
       </div>
     </div>
   );

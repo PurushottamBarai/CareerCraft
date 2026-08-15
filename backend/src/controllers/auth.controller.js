@@ -30,17 +30,98 @@ const fetchUserProfile = async (userId, role) => {
 
 const sendOtpEmail = async (email, otp, name) => {
   const emailHtml = `
-    <div style="font-family: Arial, sans-serif; background-color: #f6f8fa; padding: 30px;">
-      <div style="max-width: 480px; margin: 0 auto; background: #fff; border: 1px solid #d0d7de; border-radius: 6px; padding: 24px;">
-        <h2 style="color: #24292f; text-align: center;">CareerCraft</h2>
-        <p>Please verify your email, <strong>${name}</strong></p>
-        <p>Your email verification code is:</p>
-        <div style="text-align: center; margin: 20px 0; font-size: 28px; font-weight: bold; letter-spacing: 4px;">${otp}</div>
-        <p style="font-size: 13px; color: #57606a;">This code is valid for 10 minutes and can only be used once.</p>
+  <div style="font-family: Arial, sans-serif; background-color: #f6f8fa; padding: 30px;">
+
+    <div style="max-width: 480px; margin: 0 auto; background: #fff; border: 1px solid #d0d7de; border-radius: 6px; padding: 24px;">
+
+      <h2 style="
+        color: #24292f;
+        text-align: center;
+        margin: 0 0 28px 0;
+        font-size: 20px;
+        font-weight: 600;
+      ">
+        CareerCraft
+      </h2>
+
+      <p style="
+        color: #24292f;
+        font-size: 14px;
+        margin: 0 0 24px 0;
+      ">
+        Please verify your email, <strong>${name}</strong>
+      </p>
+
+      <p style="
+        color: #24292f;
+        font-size: 13px;
+        margin: 0 0 18px 0;
+      ">
+        Here is your CareerCraft email verification code:
+      </p>
+
+      <div style="
+        text-align: center;
+        margin: 20px 0 22px 0;
+        font-size: 28px;
+        font-weight: bold;
+        letter-spacing: 4px;
+        color: #24292f;
+      ">
+        ${otp}
       </div>
+
+      <p style="
+        color: #24292f;
+        font-size: 13px;
+        line-height: 1.5;
+        margin: 0 0 8px 0;
+      ">
+        This code is valid for <strong>10 minutes</strong> and can only be used once.
+      </p>
+
+      <p style="
+        color: #24292f;
+        font-size: 13px;
+        line-height: 1.5;
+        margin: 0 0 18px 0;
+      ">
+        <strong>Please don't share this code with anyone:</strong> we'll never ask for it on
+        the phone or via email.
+      </p>
+
+      <p style="
+        color: #24292f;
+        font-size: 13px;
+        line-height: 1.5;
+        margin: 0 0 8px 0;
+      ">
+        Thanks,
+      </p>
+
+      <p style="
+        color: #24292f;
+        font-size: 13px;
+        line-height: 1.5;
+        margin: 0;
+      ">
+        The CareerCraft Team
+      </p>
+
+      <div style="
+        color: #57606a;
+        font-size: 16px;
+        font-weight: bold;
+        letter-spacing: 1px;
+        margin-top: 4px;
+      ">
+        •••
+      </div>
+
     </div>
-  `;
-  await sendEmail(email, "CareerCraft – Email Verification Code", emailHtml);
+  </div>
+`;
+  await sendEmail(email, "Email Verification for CareerCraft", emailHtml);
 };
 
 export const register = async (req, res) => {
@@ -166,24 +247,20 @@ export const verifyOtp = async (req, res) => {
     if (!email || !otp)
       return res.status(400).json({ message: "Email and OTP are required" });
     if (!verificationToken) {
-      return res
-        .status(400)
-        .json({
-          message:
-            "Verification token missing or expired. Please request a new OTP.",
-        });
+      return res.status(400).json({
+        message:
+          "Verification token missing or expired. Please request a new OTP.",
+      });
     }
 
     let decoded;
     try {
       decoded = jwt.verify(verificationToken, process.env.JWT_SECRET);
     } catch (err) {
-      return res
-        .status(400)
-        .json({
-          message:
-            "OTP has expired or token is invalid. Please request a new OTP.",
-        });
+      return res.status(400).json({
+        message:
+          "OTP has expired or token is invalid. Please request a new OTP.",
+      });
     }
 
     if (decoded.email !== email) {
@@ -259,7 +336,12 @@ export const login = async (req, res) => {
         { expiresIn: "8h" },
       );
       return res.json({
-        user: { id: 9999, name: process.env.ADMIN_USERNAME, firstName: process.env.ADMIN_USERNAME, role: "admin" },
+        user: {
+          id: 9999,
+          name: process.env.ADMIN_USERNAME,
+          firstName: process.env.ADMIN_USERNAME,
+          role: "admin",
+        },
         token,
       });
     }
