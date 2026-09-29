@@ -1,7 +1,7 @@
 import React from 'react';
 
 const Quiz = () => {
-  const serviceUrl = import.meta.env.VITE_QUIZ_SERVICE_URL || 'https://quiz-d8f3.onrender.com';
+  const serviceUrl = import.meta.env.VITE_QUIZ_SERVICE_URL || 'https://quiz-w0ss.onrender.com';
 
   return (
     <div id="quiz" style={{ width: '100%', minHeight: 'calc(100vh - 80px)', display: 'flex', flexDirection: 'column', scrollMarginTop: '90px' }}>
